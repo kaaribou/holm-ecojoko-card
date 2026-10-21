@@ -14,6 +14,7 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 
 - 🎯 **Puissance en temps réel** sur une jauge 0 → 10 kW (échelle réglable), avec la courbe de la dernière heure.
 - 💶 **Aujourd'hui** : kWh et coût, avec vos prix heures creuses / heures pleines (nombres ou entités), et la part des heures creuses.
+- 🌗 **Heures creuses / heures pleines** : « Heures creuses » ou « Heures pleines » sur le cadran, et/ou disque vert / orange — automatique avec [HOLM HP/HC](https://github.com/kaaribou/holm-tarif), ou d'après le compteur HC / HP qui avance.
 - 🔢 **Tous les compteurs** : capteurs remis à zéro chaque jour (Ecojoko…) ou **index cumulés** (Linky, ZLinky…), reconnus automatiquement — sans sous-compteur journalier.
 - 📊 **Sur 7 jours** : coût, kWh et barres par jour.
 - ↕️ **Écart du jour** : comparaison avec la moyenne des 7 derniers jours **aux mêmes heures** (+5 %, −9 %…).
@@ -21,6 +22,10 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 - 🔄 Défilement automatique des informations (ou manuel), couleurs personnalisables, taille réglable.
 
 ![Consommation, semaine et mode solaire](docs/images/cadrans.png)
+
+**Heures creuses / heures pleines** : texte seul, texte et fond en heures creuses, texte et fond en heures pleines
+
+![Heures creuses et heures pleines](docs/images/heures-creuses.png)
 
 ---
 
@@ -83,6 +88,10 @@ price_export: 0.04                        # prix de revente
 | `mode` | `conso` (consommation) ou `solar` (production) | `conso` |
 | `power` | Puissance en temps réel, en W (**obligatoire**) | — |
 | `energy_hc` / `energy_hp` | Énergie consommée en heures creuses / pleines (kWh ou Wh) : compteur du jour ou index cumulé | — |
+| `hc_display` | Indicateur heures creuses / pleines : `text` (texte sur le cadran), `color` (disque vert / orange), `both`, `none` | `text` |
+| `hc_pages` | Fond coloré sur la page `power` seulement ou sur `all` (toutes les pages) | `power` |
+| `hc_source` | Entité qui indique les heures creuses (ex. `binary_sensor.heures_creuses`, tarif en cours du Linky) | automatique |
+| `hc_values` | Valeurs de `hc_source` qui signifient « heures creuses » | `on, HC, HC.., heures creuses` |
 | `energy_counter` | `auto`, `daily` (remis à zéro chaque jour) ou `total` (index cumulé) | `auto` |
 | `price_hc` / `price_hp` | Prix du kWh HC / HP : nombre ou entité | — |
 | `solar_power` / `solar_energy` / `export_energy` | En mode conso : ajoute une page « solaire » | — |
@@ -92,7 +101,17 @@ price_export: 0.04                        # prix de revente
 | `rotate_seconds` | Défilement automatique (0 = désactivé) | `10` |
 | `title` / `title_position` | Titre, en haut ou en bas | — |
 | `size` / `show_frame` | Taille du cadran, cadre de la carte | — |
-| `colors` | Couleurs de chaque page (`power`, `today`, `week`, `solar`…) | bleu / turquoise / vert / or |
+| `colors` | Couleurs de chaque page (`power`, `today`, `week`, `solar`…), et `hc` / `hp` pour l'indicateur | bleu / turquoise / vert / or, vert / orange |
+
+### Heures creuses / heures pleines
+
+La carte sait si vous êtes en heures creuses, sans réglage :
+
+1. avec l'intégration **[HOLM HP/HC](https://github.com/kaaribou/holm-tarif)**, son capteur `binary_sensor.heures_creuses` est trouvé automatiquement ;
+2. sinon, d'après vos compteurs `energy_hc` / `energy_hp` : celui qui avance indique la période en cours (l'indicateur apparaît dès la première hausse) ;
+3. ou d'après l'entité de votre choix (`hc_source`), par exemple le tarif en cours donné par votre compteur Linky.
+
+L'indicateur peut afficher « Heures creuses » / « Heures pleines » sur le cadran, colorer le disque en vert / orange (sur la page puissance ou sur toutes), ou les deux.
 
 ## FAQ
 

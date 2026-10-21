@@ -1,10 +1,11 @@
-/* holm-ecojoko-card — https://github.com/kaaribou/holm-ecojoko-card — licence MIT — v1.1.0 */
+/* holm-ecojoko-card — https://github.com/kaaribou/holm-ecojoko-card — licence MIT — v1.2.0 */
 // holm-ecojoko-card — cadran façon Ecojoko, adapté au thème (aucun helper)
 // type: custom:holm-ecojoko-card
 // power: sensor.ecojoko_consommation_temps_reel      (W, temps réel)
 // energy_hc: sensor.ecojoko_consommation_hc_reseau    (kWh, total_increasing)
 // energy_hp: sensor.ecojoko_consommation_hp_reseau
-// energy_counter: auto | daily | total   (compteurs remis à zéro chaque jour, ou index cumulés type Linky)
+// energy_counter: auto | daily | total
+// hc_display: text | color | both | none  (indicateur heures creuses / pleines), hc_source: binary_sensor.heures_creuses (auto si absent)   (compteurs remis à zéro chaque jour, ou index cumulés type Linky)
 // price_hc: input_number.hc_heures_creuses            (€/kWh)  — ou nombre
 // price_hp: input_number.heures_pleines
 // solar_power: sensor.ecu_current_power               (optionnel)
@@ -24,7 +25,10 @@ class HolmEcojokoCard extends HTMLElement {
       max_power: 12000, rotate_seconds: 10,
       colors: { power: "#1f6aa8", today: "#0a8f95", week: "#43a867", solar: "#d99a1c" }, ...c,
     };
-    this._c.colors = { power: "#1f6aa8", today: "#0a8f95", week: "#43a867", solar: "#d99a1c", ...(c.colors || {}) };
+    this._c.colors = { power: "#1f6aa8", today: "#0a8f95", week: "#43a867", solar: "#d99a1c", hc: "#2e9e5b", hp: "#e2702a", ...(c.colors || {}) };
+    this._c.hc_display = ["text", "color", "both", "none"].includes(c.hc_display) ? c.hc_display : "text";
+    this._c.hc_pages = c.hc_pages === "all" ? "all" : "power";
+    this._c.hc_values = String(c.hc_values || "on, HC, HC.., heures creuses").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
     if (typeof this._c.scale === "string") this._c.scale = this._c.scale.split(/[;, ]+/).map(Number).filter((n) => !isNaN(n));
     if (!Array.isArray(this._c.scale) || this._c.scale.length < 2) delete this._c.scale;
     this._c.max_power = Number(this._c.max_power) || 12000;
@@ -34,7 +38,7 @@ class HolmEcojokoCard extends HTMLElement {
     this._base = {}; this._todayStat = {};
     this._solar = this._c.mode === "solar";
     if (this._solar) {
-      this._c.colors = { power: "#d9921c", today: "#e2702a", week: "#43a867", self: "#0a8f95", ...(c.colors || {}) };
+      this._c.colors = { power: "#d9921c", today: "#e2702a", week: "#43a867", self: "#0a8f95", hc: "#2e9e5b", hp: "#e2702a", ...(c.colors || {}) };
       if (!this._c.scale) this._c.scale = [0, 250, 500, 1000, 2000, 3000, 4500];
       if (!c.max_power) this._c.max_power = 6000;
       this._slides = ["power", "today", "week", "self"];
@@ -74,8 +78,36 @@ class HolmEcojokoCard extends HTMLElement {
     if (base !== undefined) return raw >= base - 0.001 && Math.abs(raw - base - (ts || 0)) <= Math.abs(raw - (ts || 0)) ? total : raw;
     return ts !== undefined && raw > ts * 3 + 5 ? ts : raw;
   }
+  // Heures creuses ? 1) entité choisie, 2) intégration HOLM HP/HC, 3) compteur HC ou HP qui avance
+  _hcEntity() {
+    const h = this._hass; if (!h) return null;
+    if (this._c.hc_source) return this._c.hc_source;
+    if (this._hcAuto === undefined || (this._hcAuto && !h.states[this._hcAuto]))
+      this._hcAuto = Object.keys(h.states).find((e) => e.startsWith("binary_sensor.") && h.states[e].attributes.plages_hc !== undefined && h.states[e].attributes.prochaine_periode !== undefined) || null;
+    return this._hcAuto;
+  }
+  _isHC() {
+    const ent = this._hcEntity();
+    if (ent) {
+      const st = this._hass.states[ent];
+      if (!st || ["unknown", "unavailable", ""].includes(st.state)) return null;
+      const v = st.state.trim().toLowerCase();
+      if (v === "off" || v === "false") return false;
+      return this._c.hc_values.some((x) => v === x || (x.length > 2 && v.includes(x)));
+    }
+    return this._solar ? null : this._hcLast ?? null;
+  }
+  _trackCounters() {
+    const c = this._c; if (this._solar || !c.energy_hc || !c.energy_hp) return;
+    for (const [id, hc] of [[c.energy_hc, true], [c.energy_hp, false]]) {
+      const v = this._num(id), prev = this._prev?.[id];
+      if (!isNaN(v) && prev !== undefined && v > prev) this._hcLast = hc;
+      (this._prev = this._prev || {})[id] = v;
+    }
+  }
   set hass(h) {
     this._hass = h;
+    this._trackCounters();
     if (!this.shadowRoot) { this.attachShadow({ mode: "open" }); this._render(true); this._startTimer(); }
     const c = this._c;
     const p = this._num(c.power);
@@ -87,7 +119,7 @@ class HolmEcojokoCard extends HTMLElement {
     }
     const dayKey = new Date().toDateString();
     if (Date.now() - this._fetched > 300000 || this._dayKey !== dayKey) { this._fetched = Date.now(); this._dayKey = dayKey; this._load(); }
-    const key = [c.power, c.energy, c.energy_hc, c.energy_hp, c.solar_power, c.solar_energy, c.export_energy, c.forecast].map((e) => e && h.states[e]?.state).join("|");
+    const key = [c.power, c.energy, c.energy_hc, c.energy_hp, c.solar_power, c.solar_energy, c.export_energy, c.forecast, this._hcEntity()].map((e) => e && h.states[e]?.state).join("|") + "|" + this._hcLast;
     if (key !== this._key) { this._key = key; this._render(); }
   }
   async _load() {
@@ -185,7 +217,13 @@ class HolmEcojokoCard extends HTMLElement {
     const [nx0, ny0] = this._pt(117, pa), [nx1, ny1] = this._pt(139, pa);
     svg += `<line x1="${nx0}" y1="${ny0}" x2="${nx1}" y2="${ny1}" class="needle" style="stroke:${col.power}"/>`;
     const [ux, uy] = this._pt(111, 90);
-    svg += `<text x="${ux}" y="${uy}" class="unit">watts</text>`;
+    const hcNow = c.hc_display === "none" ? null : this._isHC();
+    const hcCol = hcNow === null ? null : hcNow ? col.hc : col.hp;
+    // « Heures creuses / pleines » sous l'aiguille, à la place de « watts » (la valeur affiche déjà les W)
+    if (hcNow !== null && (c.hc_display === "text" || c.hc_display === "both")) {
+      const [hx, hy] = this._pt(101, 90);
+      svg += `<text x="${hx}" y="${hy}" class="hcl" style="fill:${hcCol}">${hcNow ? "Heures creuses" : "Heures pleines"}</text>`;
+    } else svg += `<text x="${ux}" y="${uy}" class="unit">watts</text>`;
     // anneau bas (écart %)
     const dp = this._stats?.deltaPct;
     svg += `<path d="${this._arc(128, 215, 325)}" class="trk"/>`;
@@ -275,6 +313,8 @@ class HolmEcojokoCard extends HTMLElement {
         ${!isNaN(se) ? `<div class="sub">${fmtNum(se, 1)} kWh aujourd'hui</div>` : ""}
         ${!isNaN(auto) ? `<div class="sub">Autoconsommation ${fmtNum(auto)} %</div>` : ""}`;
     }
+    // fond du disque aux couleurs heures creuses / pleines
+    if (hcNow !== null && (c.hc_display === "color" || c.hc_display === "both") && (c.hc_pages === "all" || s === "power")) color = hcCol;
     const dots = this._slides.map((_, i) => `<b class="${i === this._slide ? "on" : ""}" data-i="${i}"></b>`).join("");
 
     if (full || !this._root) {
@@ -297,6 +337,7 @@ class HolmEcojokoCard extends HTMLElement {
         .lbl { fill: var(--secondary-text-color); font-size:12px; text-anchor:middle; dominant-baseline:middle; letter-spacing:.3px; }
         .unit.pct { font-size:10px; font-weight:600; opacity:1; }
         .unit { fill: var(--secondary-text-color); font-size:8px; text-anchor:middle; dominant-baseline:middle; opacity:.8; }
+        .hcl { font-size:10px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; text-anchor:middle; dominant-baseline:middle; }
         .disc { position:absolute; left:50%; top:50%; width:57.5%; height:57.5%; overflow:hidden; transform:translate(-50%,-50%); border-radius:50%;
                 display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#fff; cursor:pointer;
                 box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08); transition: background .5s; user-select:none; padding:8px; box-sizing:border-box; }
@@ -377,6 +418,8 @@ const LABELS = {
   price_export: "Prix de rachat (€/kWh)", forecast: "Prévision de production du jour (kWh)",
   max_power: "Puissance maximale (W)", scale: "Graduations (W, séparées par des virgules)", rotate_seconds: "Défilement automatique (secondes, 0 = désactivé)",
   size: "Diamètre maximum (px, 0 = auto)", show_frame: "Afficher le cadre de la carte",
+  hc_display: "Indicateur heures creuses / pleines", hc_pages: "Fond coloré sur", hc_source: "Source (automatique si vide : HOLM HP/HC ou compteurs HC / HP)",
+  hc_values: "Valeurs signifiant « heures creuses »", c_hc: "Couleur — heures creuses", c_hp: "Couleur — heures pleines",
   c_power: "Couleur — temps réel", c_today: "Couleur — aujourd'hui", c_week: "Couleur — 7 jours", c_solar: "Couleur — solaire", c_self: "Couleur — autoconsommation",
 };
 const ent = (domains) => ({ entity: { domain: domains } });
@@ -386,7 +429,7 @@ class HolmEcojokoCardEditor extends HTMLElement {
   setConfig(c) { this._config = { ...c }; this._update(); }
   set hass(h) { this._hass = h; this._update(); }
   _schema(solar) {
-    const colorKeys = solar ? ["power", "today", "week", "self"] : ["power", "today", "week", "solar"];
+    const colorKeys = solar ? ["power", "today", "week", "self", "hc", "hp"] : ["power", "today", "week", "solar", "hc", "hp"];
     const entities = solar ? [
       { name: "power", required: true, selector: ent(["sensor"]) },
       { name: "energy", selector: ent(["sensor"]) },
@@ -415,6 +458,14 @@ class HolmEcojokoCardEditor extends HTMLElement {
           { value: "auto", label: "Automatique" },
           { value: "daily", label: "Remis à zéro chaque jour (Ecojoko…)" },
           { value: "total", label: "Index cumulé (Linky, ZLinky…)" }] } } }] },
+      { type: "expandable", title: "Heures creuses / pleines", icon: "mdi:leaf-circle-outline", flatten: true, schema: [
+        { name: "hc_display", selector: { select: { mode: "dropdown", options: [
+          { value: "text", label: "Texte « Heures creuses / pleines » sur le cadran" }, { value: "color", label: "Fond du disque vert / orange" },
+          { value: "both", label: "Texte et fond" }, { value: "none", label: "Aucun" }] } } },
+        { name: "hc_pages", selector: { select: { mode: "dropdown", options: [{ value: "power", label: "La page puissance" }, { value: "all", label: "Toutes les pages" }] } } },
+        { name: "hc_source", selector: { entity: {} } },
+        { name: "hc_values", selector: { text: {} } },
+      ] },
       { type: "expandable", title: "Cadran et affichage", icon: "mdi:gauge", flatten: true, schema: [
         { type: "grid", name: "", schema: [
           { name: "max_power", selector: { number: { min: 100, max: 50000, step: 100, mode: "box", unit_of_measurement: "W" } } },
@@ -430,7 +481,7 @@ class HolmEcojokoCardEditor extends HTMLElement {
     ];
   }
   _data() {
-    const c = this._config || {}, d = { title_position: "top", mode: "conso", rotate_seconds: 10, size: 0, show_frame: true, energy_counter: "auto", ...c };
+    const c = this._config || {}, d = { title_position: "top", mode: "conso", rotate_seconds: 10, size: 0, show_frame: true, energy_counter: "auto", hc_display: "text", hc_pages: "power", ...c };
     d.scale = Array.isArray(c.scale) ? c.scale.join(", ") : c.scale || "";
     for (const [k, v] of Object.entries(c.colors || {})) d["c_" + k] = hex2rgb(v);
     delete d.colors;
@@ -457,6 +508,8 @@ class HolmEcojokoCardEditor extends HTMLElement {
         if (!out.size) delete out.size;
         if (out.show_frame !== false) delete out.show_frame;
         if (out.energy_counter === "auto") delete out.energy_counter;
+        if (out.hc_display === "text") delete out.hc_display;
+        if (out.hc_pages === "power") delete out.hc_pages;
         this._config = out;
         this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: out }, bubbles: true, composed: true }));
       });
@@ -474,4 +527,4 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "holm-ecojoko-card", name: "HOLM – Cadran Ecojoko", description: "Cadran consommation / production solaire façon Ecojoko, adapté au thème", preview: true });
 })();
 
-console.info("%c HOLM-ECOJOKO %c 1.1.0 ", "background:#1f6aa8;color:#111;border-radius:3px 0 0 3px", "background:#123;color:#fff;border-radius:0 3px 3px 0");
+console.info("%c HOLM-ECOJOKO %c 1.2.0 ", "background:#1f6aa8;color:#111;border-radius:3px 0 0 3px", "background:#123;color:#fff;border-radius:0 3px 3px 0");
