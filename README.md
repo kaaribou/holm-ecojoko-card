@@ -13,7 +13,8 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 ### En bref
 
 - 🎯 **Puissance en temps réel** sur une jauge 0 → 10 kW (échelle réglable), avec la courbe de la dernière heure.
-- 💶 **Aujourd'hui** : kWh et coût, avec vos prix heures creuses / heures pleines (nombres ou entités).
+- 💶 **Aujourd'hui** : kWh et coût, avec vos prix heures creuses / heures pleines (nombres ou entités), et la part des heures creuses.
+- 🔢 **Tous les compteurs** : capteurs remis à zéro chaque jour (Ecojoko…) ou **index cumulés** (Linky, ZLinky…), reconnus automatiquement — sans sous-compteur journalier.
 - 📊 **Sur 7 jours** : coût, kWh et barres par jour.
 - ↕️ **Écart du jour** : comparaison avec la moyenne des 7 derniers jours **aux mêmes heures** (+5 %, −9 %…).
 - ☀️ **Mode production solaire** : production en direct, du jour, de la semaine et autoconsommation, avec valorisation (prix autoconsommé / prix de revente).
@@ -45,9 +46,21 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 ```yaml
 type: custom:holm-ecojoko-card
 power: sensor.puissance_maison            # W, temps réel
-energy_hc: sensor.energie_heures_creuses  # kWh, total_increasing
+energy_hc: sensor.energie_heures_creuses  # kWh (ou Wh), total_increasing
 energy_hp: sensor.energie_heures_pleines
 price_hc: 0.2068                          # ou une entité (input_number…)
+price_hp: 0.27
+```
+
+**Index cumulés (Linky, ZLinky…)** : indiquez directement vos index HC et HP. La carte calcule la consommation du jour (valeur actuelle − valeur à minuit, lue dans les statistiques de Home Assistant) : pas besoin de créer des compteurs journaliers (*utility_meter*).
+
+```yaml
+type: custom:holm-ecojoko-card
+power: sensor.linky_puissance_apparente
+energy_hc: sensor.lixee_easf01            # index HC (Wh ou kWh)
+energy_hp: sensor.lixee_easf02            # index HP
+energy_counter: total                     # facultatif : reconnu automatiquement
+price_hc: 0.2068
 price_hp: 0.27
 ```
 
@@ -69,7 +82,8 @@ price_export: 0.04                        # prix de revente
 |---|---|---|
 | `mode` | `conso` (consommation) ou `solar` (production) | `conso` |
 | `power` | Puissance en temps réel, en W (**obligatoire**) | — |
-| `energy_hc` / `energy_hp` | Énergie consommée en heures creuses / pleines (kWh) | — |
+| `energy_hc` / `energy_hp` | Énergie consommée en heures creuses / pleines (kWh ou Wh) : compteur du jour ou index cumulé | — |
+| `energy_counter` | `auto`, `daily` (remis à zéro chaque jour) ou `total` (index cumulé) | `auto` |
 | `price_hc` / `price_hp` | Prix du kWh HC / HP : nombre ou entité | — |
 | `solar_power` / `solar_energy` / `export_energy` | En mode conso : ajoute une page « solaire » | — |
 | `energy` / `price_self` / `price_export` / `forecast` | Mode solaire : production (kWh), valeurs du kWh, prévision | — |
@@ -85,6 +99,7 @@ price_export: 0.04                        # prix de revente
 | Problème | Solution |
 |---|---|
 | Pas de coût | Indiquez `price_hc` / `price_hp` (ou `price_self` / `price_export` en solaire). |
+| « Aujourd'hui » affiche un total énorme | Vos capteurs sont des index cumulés : choisissez **Index cumulé** (`energy_counter: total`) si la détection automatique ne l'a pas reconnu. Les statistiques doivent être activées pour ces capteurs (`state_class: total_increasing`). |
 | Pas d'écart du jour | Il faut au moins une journée complète d'historique sur les 7 derniers jours. |
 | La nouvelle version ne s'affiche pas | Videz le cache (Ctrl + F5). |
 
@@ -104,4 +119,6 @@ La carte vous plaît ? Vous pouvez m'offrir une bière 🍺
 
 Code : licence **MIT** — © kaaribou. Voir le [CHANGELOG](CHANGELOG.md).
 
-Fait partie de la collection **HOLM** : [Carburant HOLM](https://github.com/kaaribou/carburant-holm) · [HOLM Navbar Card](https://github.com/kaaribou/holm-navbar-card) · [HOLM Music Card](https://github.com/kaaribou/holm-music-card) · [HOLM Sentinel Card](https://github.com/kaaribou/holm-sentinel-card).
+Fait partie de **HOLM — Home Orchestration & Living Management** : la gestion et l'orchestration intelligente de la maison.
+
+Les autres projets : [Volets HOLM](https://github.com/kaaribou/volets-holm) · [Climat HOLM](https://github.com/kaaribou/climat-holm) · [Carburant HOLM](https://github.com/kaaribou/carburant-holm) · [Commandes à la maison HOLM](https://github.com/kaaribou/commandes-holm) · [HOLM LaMetric](https://github.com/kaaribou/lametric-holm) · [HOLM My Menu](https://github.com/kaaribou/holm-mymenu) · [HOLM Lektrico](https://github.com/kaaribou/lektrico-holm) · [HOLM Navbar Card](https://github.com/kaaribou/holm-navbar-card) · [HOLM Climate Card](https://github.com/kaaribou/climate-card-holm) · [HOLM Music Card](https://github.com/kaaribou/holm-music-card) · [HOLM Sentinel Card](https://github.com/kaaribou/holm-sentinel-card) · [HOLM Security Card](https://github.com/kaaribou/holm-security-card) · [HOLM Recordings Card](https://github.com/kaaribou/holm-recordings-card) · [HOLM Covers Card](https://github.com/kaaribou/holm-covers-card) · [HOLM Runtime Card](https://github.com/kaaribou/holm-runtime-card) · [HOLM Power Flow Card](https://github.com/kaaribou/holm-power-flow-card) · [HOLM Energy Cards](https://github.com/kaaribou/holm-energy-cards) · [HOLM Radiator Card](https://github.com/kaaribou/holm-radiator-card) · [HOLM Floor Card](https://github.com/kaaribou/holm-floor-card) · [HOLM Smoke Card](https://github.com/kaaribou/holm-smoke-card) · [HOLM BG Card](https://github.com/kaaribou/holm-bg-card).

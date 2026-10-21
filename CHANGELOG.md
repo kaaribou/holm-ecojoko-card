@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0
+- **Index cumulés** ([#1](https://github.com/kaaribou/holm-ecojoko-card/issues/1)) : les compteurs HC / HP (et production / revente en mode solaire) peuvent être des index qui ne repartent jamais de zéro (Linky, ZLinky…). La consommation du jour est calculée à partir des statistiques (valeur actuelle − valeur à minuit), sans sous-compteur journalier. Option **Type de compteur** : automatique (par défaut), remis à zéro chaque jour, ou index cumulé.
+- Les capteurs en Wh (ou MWh) sont convertis en kWh.
+- **Part des heures creuses** (%) dans la page Aujourd'hui.
+
 ## 1.0.0
 Première version publique.
 
