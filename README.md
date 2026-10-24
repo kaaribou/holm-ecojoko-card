@@ -15,6 +15,7 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 - 🎯 **Puissance en temps réel** sur une jauge 0 → 10 kW (échelle réglable), avec la courbe de la dernière heure.
 - 💶 **Aujourd'hui** : kWh et coût, avec vos prix heures creuses / heures pleines (nombres ou entités), et la part des heures creuses.
 - 🌗 **Heures creuses / heures pleines** : « Heures creuses » ou « Heures pleines » sur le cadran, et/ou disque vert / orange — automatique avec [HOLM HP/HC](https://github.com/kaaribou/holm-tarif), ou d'après le compteur HC / HP qui avance.
+- 🔵⚪🔴 **Option Tempo (EDF)** : les 6 index (Bleu, Blanc, Rouge × HC / HP) et leurs prix, « Jour Bleu · HC » sur le cadran, disque aux couleurs du jour, couleur de demain, et barres de la semaine colorées selon le jour.
 - 🔢 **Tous les compteurs** : capteurs remis à zéro chaque jour (Ecojoko…) ou **index cumulés** (Linky, ZLinky…), reconnus automatiquement — sans sous-compteur journalier.
 - 📊 **Sur 7 jours** : coût, kWh et barres par jour.
 - ↕️ **Écart du jour** : comparaison avec la moyenne des 7 derniers jours **aux mêmes heures** (+5 %, −9 %…).
@@ -26,6 +27,10 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 **Heures creuses / heures pleines** : texte seul, texte et fond en heures creuses, texte et fond en heures pleines
 
 ![Heures creuses et heures pleines](docs/images/heures-creuses.png)
+
+**Option Tempo** : jour Bleu avec la couleur de demain, coût du jour, semaine aux couleurs Tempo, jour Blanc
+
+![Option Tempo](docs/images/tempo.png)
 
 ---
 
@@ -94,6 +99,10 @@ price_export: 0.04                        # prix de revente
 | `hc_values` | Valeurs de `hc_source` qui signifient « heures creuses » | `on, HC, HC.., heures creuses` |
 | `energy_counter` | `auto`, `daily` (remis à zéro chaque jour) ou `total` (index cumulé) | `auto` |
 | `price_hc` / `price_hp` | Prix du kWh HC / HP : nombre ou entité | — |
+| `tariff` | Option tarifaire : `hchp` (heures creuses / pleines) ou `tempo` | `hchp` |
+| `energy_bleu_hc` … `energy_rouge_hp` | Tempo : les 6 index (`bleu`, `blanc`, `rouge` × `hc`, `hp`) | — |
+| `price_bleu_hc` … `price_rouge_hp` | Tempo : les 6 prix (nombre ou entité) | — |
+| `tempo_color` / `tempo_color_tomorrow` | Tempo : couleur du jour et de demain | automatique |
 | `solar_power` / `solar_energy` / `export_energy` | En mode conso : ajoute une page « solaire » | — |
 | `energy` / `price_self` / `price_export` / `forecast` | Mode solaire : production (kWh), valeurs du kWh, prévision | — |
 | `max_power` | Puissance maximale de la jauge (W) | `12000` (6000 en solaire) |
@@ -101,7 +110,7 @@ price_export: 0.04                        # prix de revente
 | `rotate_seconds` | Défilement automatique (0 = désactivé) | `10` |
 | `title` / `title_position` | Titre, en haut ou en bas | — |
 | `size` / `show_frame` | Taille du cadran, cadre de la carte | — |
-| `colors` | Couleurs de chaque page (`power`, `today`, `week`, `solar`…), et `hc` / `hp` pour l'indicateur | bleu / turquoise / vert / or, vert / orange |
+| `colors` | Couleurs de chaque page (`power`, `today`, `week`, `solar`…), `hc` / `hp` pour l'indicateur, `bleu` / `blanc` / `rouge` pour Tempo | bleu / turquoise / vert / or, vert / orange |
 
 ### Heures creuses / heures pleines
 
@@ -112,6 +121,36 @@ La carte sait si vous êtes en heures creuses, sans réglage :
 3. ou d'après l'entité de votre choix (`hc_source`), par exemple le tarif en cours donné par votre compteur Linky.
 
 L'indicateur peut afficher « Heures creuses » / « Heures pleines » sur le cadran, colorer le disque en vert / orange (sur la page puissance ou sur toutes), ou les deux.
+
+### Option Tempo
+
+Pour l'option **Tempo** d'EDF, choisissez **Option tarifaire → Tempo** dans l'éditeur, puis indiquez vos 6 index (un Linky ou un ZLinky les fournit) et vos 6 prix.
+
+```yaml
+type: custom:holm-ecojoko-card
+power: sensor.linky_sinsts
+tariff: tempo
+energy_bleu_hc: sensor.linky_easf01
+energy_bleu_hp: sensor.linky_easf02
+energy_blanc_hc: sensor.linky_easf03
+energy_blanc_hp: sensor.linky_easf04
+energy_rouge_hc: sensor.linky_easf05
+energy_rouge_hp: sensor.linky_easf06
+price_bleu_hc: 0.1296
+price_bleu_hp: 0.1609
+price_blanc_hc: 0.1486
+price_blanc_hp: 0.1894
+price_rouge_hc: 0.1568
+price_rouge_hp: 0.7562
+hc_display: both
+```
+
+- **Couleur du jour et de demain** : trouvées automatiquement avec l'intégration [RTE Tempo](https://github.com/hekmon/rtetempo) (ou tout capteur « tempo » dont l'état est Bleu / Blanc / Rouge). Sinon, choisissez l'entité (`tempo_color`, `tempo_color_tomorrow`) ; à défaut, la couleur est déduite de l'index qui avance.
+- **Heures creuses** : comme en HC / HP (HOLM HP/HC, capteur « Heures creuses » de RTE Tempo, `hc_source` ou index qui avance) ; à défaut, 22 h – 6 h.
+- Sur le cadran : « Jour Bleu · HC » et/ou disque aux couleurs du jour (`hc_display`) ; la couleur de demain s'affiche sur la page puissance dès qu'elle est connue.
+- Le coût du jour et de la semaine est calculé index par index ; chaque barre de la semaine prend la couleur Tempo du jour.
+
+> Les prix ci-dessus sont des exemples : reportez ceux de votre contrat.
 
 ## FAQ
 

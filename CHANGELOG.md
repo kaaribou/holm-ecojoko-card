@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0
+- **Option Tempo (EDF)** ([#3](https://github.com/kaaribou/holm-ecojoko-card/issues/3)) : option tarifaire **Tempo** (`tariff: tempo`) avec les 6 index (Bleu, Blanc, Rouge × HC / HP) et leurs 6 prix (nombres ou entités).
+  - « Jour Bleu · HC » sur le cadran et/ou disque aux couleurs du jour (`hc_display`), couleur de demain sur la page puissance.
+  - Couleur du jour et de demain trouvées automatiquement (intégration RTE Tempo, capteurs « tempo »), ou entités au choix (`tempo_color`, `tempo_color_tomorrow`), ou déduites de l'index qui avance.
+  - Coût du jour et de la semaine calculés index par index ; barres de la semaine colorées selon la couleur Tempo du jour.
+  - Heures creuses Tempo 22 h – 6 h par défaut si aucune autre source n'est disponible.
+- Sans l'option, la carte est inchangée.
+
 ## 1.2.0
 - **Indicateur heures creuses / heures pleines** : « Heures creuses » ou « Heures pleines » sur le cadran, et/ou disque vert / orange (page puissance ou toutes les pages), couleurs réglables.
 - Période détectée automatiquement : intégration [HOLM HP/HC](https://github.com/kaaribou/holm-tarif) (`binary_sensor.heures_creuses`), sinon compteur HC / HP qui avance, ou entité au choix (`hc_source`).
