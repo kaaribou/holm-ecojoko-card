@@ -1,4 +1,4 @@
-/* holm-ecojoko-card — https://github.com/kaaribou/holm-ecojoko-card — licence MIT — v1.3.0 */
+/* holm-ecojoko-card — https://github.com/kaaribou/holm-ecojoko-card — licence MIT — v1.4.0 */
 // holm-ecojoko-card — cadran façon Ecojoko, adapté au thème (aucun helper)
 // type: custom:holm-ecojoko-card
 // power: sensor.ecojoko_consommation_temps_reel      (W, temps réel)
@@ -17,9 +17,154 @@
 // rotate_seconds: 10 (0 = pas de défilement auto)
 (() => {
 const NS = "http://www.w3.org/2000/svg";
-const fmtNum = (v, d = 0) => Number(v).toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
+// ---- traductions (fr, en, de, es, it, nl, pt, pl) ----
+const I18N = {
+  fr: { bleu: "Bleu", blanc: "Blanc", rouge: "Rouge", hc: "HC", hp: "HP", hc_long: "Heures creuses", hp_long: "Heures pleines", day_col: "Jour {c}", watts: "watts",
+    prod_rt: "Production<br>temps réel", forecast_day: "Prévision du jour {x} kWh", kwh_produced: "{x} kWh produits", cons: "Conso {x}", resale: "Revente {x}", today: "Aujourd'hui", over7: "Sur 7 jours",
+    selfcons: "Autoconsommation", kwh_consumed: "{x} kWh consommés", kwh_sold: "{x} kWh revendus", power_rt: "Puissance<br>temps réel", w_produced: "☀ {x} W produits", tomorrow: "Demain : {c}",
+    solar_prod: "Production<br>solaire", kwh_today: "{x} kWh aujourd'hui", selfcons_pct: "Autoconsommation {x} %", error: "Erreur",
+    l_title: "Titre", l_title_position: "Position du titre", l_mode: "Type de cadran", l_power: "Puissance temps réel (W)", l_energy_hc: "Énergie HC (kWh)", l_energy_hp: "Énergie HP (kWh)",
+    l_energy_counter: "Type de compteur d'énergie", l_price_hc: "Prix HC (€/kWh)", l_price_hp: "Prix HP (€/kWh)", l_solar_power: "Puissance solaire (W)", l_solar_energy: "Production solaire du jour (kWh)",
+    l_energy: "Production du jour (kWh)", l_export_energy: "Énergie revendue du jour (kWh)", l_price_self: "Valeur du kWh autoconsommé (€/kWh)", l_price_export: "Prix de rachat (€/kWh)", l_forecast: "Prévision de production du jour (kWh)",
+    l_max_power: "Puissance maximale (W)", l_scale: "Graduations (W, séparées par des virgules)", l_rotate_seconds: "Défilement automatique (secondes, 0 = désactivé)", l_size: "Diamètre maximum (px, 0 = auto)", l_show_frame: "Afficher le cadre de la carte",
+    l_hc_display: "Indicateur heures creuses / pleines", l_hc_pages: "Fond coloré sur", l_hc_source: "Source (automatique si vide : HOLM HP/HC ou compteurs HC / HP)", l_hc_values: "Valeurs signifiant « heures creuses »", l_tariff: "Option tarifaire",
+    l_energy_tempo: "Énergie {c} {p} (kWh)", l_price_tempo: "Prix {c} {p} (€/kWh)", l_tempo_color: "Couleur du jour (automatique si vide : RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Couleur de demain (automatique si vide)",
+    l_c_tempo: "Couleur — jour {c}", l_c_hc: "Couleur — heures creuses", l_c_hp: "Couleur — heures pleines", l_c_power: "Couleur — temps réel", l_c_today: "Couleur — aujourd'hui", l_c_week: "Couleur — 7 jours", l_c_solar: "Couleur — solaire", l_c_self: "Couleur — autoconsommation",
+    l_language: "Langue", auto: "Automatique (profil)",
+    o_hchp: "Heures creuses / heures pleines", o_tempo: "Tempo (EDF)", o_top: "En haut", o_bottom: "En bas", o_conso: "Consommation", o_solar: "Production solaire",
+    o_auto: "Automatique", o_daily: "Remis à zéro chaque jour (Ecojoko…)", o_total: "Index cumulé (Linky, ZLinky…)",
+    o_text: "Texte « Heures creuses / pleines » (ou « Jour Bleu · HC ») sur le cadran", o_color: "Fond du disque vert / orange (ou couleur Tempo)", o_both: "Texte et fond", o_none: "Aucun", o_pg_power: "La page puissance", o_pg_all: "Toutes les pages",
+    s_entities: "Entités", s_hc: "Heures creuses / pleines et Tempo", s_dial: "Cadran et affichage", s_colors: "Couleurs",
+    card_name: "HOLM – Cadran Ecojoko", card_desc: "Cadran consommation / production solaire façon Ecojoko, adapté au thème" },
+  en: { bleu: "Blue", blanc: "White", rouge: "Red", hc: "Off-peak", hp: "Peak", hc_long: "Off-peak hours", hp_long: "Peak hours", day_col: "{c} day", watts: "watts",
+    prod_rt: "Real-time<br>production", forecast_day: "Today's forecast {x} kWh", kwh_produced: "{x} kWh produced", cons: "Used {x}", resale: "Exported {x}", today: "Today", over7: "Last 7 days",
+    selfcons: "Self-consumption", kwh_consumed: "{x} kWh used", kwh_sold: "{x} kWh exported", power_rt: "Real-time<br>power", w_produced: "☀ {x} W produced", tomorrow: "Tomorrow: {c}",
+    solar_prod: "Solar<br>production", kwh_today: "{x} kWh today", selfcons_pct: "Self-consumption {x}%", error: "Error",
+    l_title: "Title", l_title_position: "Title position", l_mode: "Dial type", l_power: "Real-time power (W)", l_energy_hc: "Off-peak energy (kWh)", l_energy_hp: "Peak energy (kWh)",
+    l_energy_counter: "Energy counter type", l_price_hc: "Off-peak price (€/kWh)", l_price_hp: "Peak price (€/kWh)", l_solar_power: "Solar power (W)", l_solar_energy: "Today's solar production (kWh)",
+    l_energy: "Today's production (kWh)", l_export_energy: "Today's exported energy (kWh)", l_price_self: "Value of a self-consumed kWh (€/kWh)", l_price_export: "Feed-in price (€/kWh)", l_forecast: "Today's production forecast (kWh)",
+    l_max_power: "Maximum power (W)", l_scale: "Scale marks (W, comma-separated)", l_rotate_seconds: "Auto-rotation (seconds, 0 = off)", l_size: "Maximum diameter (px, 0 = auto)", l_show_frame: "Show the card frame",
+    l_hc_display: "Off-peak / peak indicator", l_hc_pages: "Coloured background on", l_hc_source: "Source (automatic if empty: HOLM HP/HC or off-peak / peak counters)", l_hc_values: "Values meaning “off-peak”", l_tariff: "Tariff",
+    l_energy_tempo: "{c} {p} energy (kWh)", l_price_tempo: "{c} {p} price (€/kWh)", l_tempo_color: "Today's colour (automatic if empty: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Tomorrow's colour (automatic if empty)",
+    l_c_tempo: "Colour — {c} day", l_c_hc: "Colour — off-peak hours", l_c_hp: "Colour — peak hours", l_c_power: "Colour — real time", l_c_today: "Colour — today", l_c_week: "Colour — 7 days", l_c_solar: "Colour — solar", l_c_self: "Colour — self-consumption",
+    l_language: "Language", auto: "Automatic (profile)",
+    o_hchp: "Off-peak / peak hours", o_tempo: "Tempo (EDF)", o_top: "Top", o_bottom: "Bottom", o_conso: "Consumption", o_solar: "Solar production",
+    o_auto: "Automatic", o_daily: "Reset every day (Ecojoko…)", o_total: "Cumulative index (Linky, ZLinky…)",
+    o_text: "“Off-peak / Peak hours” text (or “Blue day · Off-peak”) on the dial", o_color: "Green / orange disc background (or Tempo colour)", o_both: "Text and background", o_none: "None", o_pg_power: "The power page", o_pg_all: "All pages",
+    s_entities: "Entities", s_hc: "Off-peak / peak hours and Tempo", s_dial: "Dial and display", s_colors: "Colours",
+    card_name: "HOLM – Ecojoko dial", card_desc: "Ecojoko-style consumption / solar production dial, matching your theme" },
+  de: { bleu: "Blau", blanc: "Weiß", rouge: "Rot", hc: "NT", hp: "HT", hc_long: "Niedertarif", hp_long: "Hochtarif", day_col: "{c}er Tag", watts: "Watt",
+    prod_rt: "Erzeugung<br>in Echtzeit", forecast_day: "Prognose heute {x} kWh", kwh_produced: "{x} kWh erzeugt", cons: "Verbr. {x}", resale: "Einsp. {x}", today: "Heute", over7: "Letzte 7 Tage",
+    selfcons: "Eigenverbrauch", kwh_consumed: "{x} kWh verbraucht", kwh_sold: "{x} kWh eingespeist", power_rt: "Leistung<br>in Echtzeit", w_produced: "☀ {x} W erzeugt", tomorrow: "Morgen: {c}",
+    solar_prod: "Solar-<br>erzeugung", kwh_today: "{x} kWh heute", selfcons_pct: "Eigenverbrauch {x} %", error: "Fehler",
+    l_title: "Titel", l_title_position: "Titelposition", l_mode: "Art der Anzeige", l_power: "Echtzeitleistung (W)", l_energy_hc: "Energie NT (kWh)", l_energy_hp: "Energie HT (kWh)",
+    l_energy_counter: "Art des Energiezählers", l_price_hc: "Preis NT (€/kWh)", l_price_hp: "Preis HT (€/kWh)", l_solar_power: "Solarleistung (W)", l_solar_energy: "Heutige Solarerzeugung (kWh)",
+    l_energy: "Heutige Erzeugung (kWh)", l_export_energy: "Heute eingespeiste Energie (kWh)", l_price_self: "Wert einer selbst verbrauchten kWh (€/kWh)", l_price_export: "Einspeisevergütung (€/kWh)", l_forecast: "Heutige Erzeugungsprognose (kWh)",
+    l_max_power: "Maximale Leistung (W)", l_scale: "Skalenstriche (W, durch Kommas getrennt)", l_rotate_seconds: "Automatischer Wechsel (Sekunden, 0 = aus)", l_size: "Maximaler Durchmesser (px, 0 = automatisch)", l_show_frame: "Kartenrahmen anzeigen",
+    l_hc_display: "Anzeige Niedertarif / Hochtarif", l_hc_pages: "Farbiger Hintergrund auf", l_hc_source: "Quelle (automatisch wenn leer: HOLM HP/HC oder NT/HT-Zähler)", l_hc_values: "Werte für „Niedertarif“", l_tariff: "Tarif",
+    l_energy_tempo: "Energie {c} {p} (kWh)", l_price_tempo: "Preis {c} {p} (€/kWh)", l_tempo_color: "Farbe von heute (automatisch wenn leer: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Farbe von morgen (automatisch wenn leer)",
+    l_c_tempo: "Farbe — {c}er Tag", l_c_hc: "Farbe — Niedertarif", l_c_hp: "Farbe — Hochtarif", l_c_power: "Farbe — Echtzeit", l_c_today: "Farbe — heute", l_c_week: "Farbe — 7 Tage", l_c_solar: "Farbe — Solar", l_c_self: "Farbe — Eigenverbrauch",
+    l_language: "Sprache", auto: "Automatisch (Profil)",
+    o_hchp: "Niedertarif / Hochtarif", o_tempo: "Tempo (EDF)", o_top: "Oben", o_bottom: "Unten", o_conso: "Verbrauch", o_solar: "Solarerzeugung",
+    o_auto: "Automatisch", o_daily: "Täglich zurückgesetzt (Ecojoko…)", o_total: "Kumulierter Zählerstand (Linky, ZLinky…)",
+    o_text: "Text „Niedertarif / Hochtarif“ (oder „Blauer Tag · NT“) auf der Anzeige", o_color: "Grüner / oranger Hintergrund (oder Tempo-Farbe)", o_both: "Text und Hintergrund", o_none: "Keine", o_pg_power: "Die Leistungsseite", o_pg_all: "Alle Seiten",
+    s_entities: "Entitäten", s_hc: "Niedertarif / Hochtarif und Tempo", s_dial: "Anzeige und Darstellung", s_colors: "Farben",
+    card_name: "HOLM – Ecojoko-Anzeige", card_desc: "Verbrauchs- / Solaranzeige im Ecojoko-Stil, passend zum Theme" },
+  es: { bleu: "Azul", blanc: "Blanco", rouge: "Rojo", hc: "Valle", hp: "Punta", hc_long: "Horas valle", hp_long: "Horas punta", day_col: "Día {c}", watts: "vatios",
+    prod_rt: "Producción<br>en tiempo real", forecast_day: "Previsión del día {x} kWh", kwh_produced: "{x} kWh producidos", cons: "Consumo {x}", resale: "Venta {x}", today: "Hoy", over7: "Últimos 7 días",
+    selfcons: "Autoconsumo", kwh_consumed: "{x} kWh consumidos", kwh_sold: "{x} kWh vendidos", power_rt: "Potencia<br>en tiempo real", w_produced: "☀ {x} W producidos", tomorrow: "Mañana: {c}",
+    solar_prod: "Producción<br>solar", kwh_today: "{x} kWh hoy", selfcons_pct: "Autoconsumo {x} %", error: "Error",
+    l_title: "Título", l_title_position: "Posición del título", l_mode: "Tipo de esfera", l_power: "Potencia en tiempo real (W)", l_energy_hc: "Energía valle (kWh)", l_energy_hp: "Energía punta (kWh)",
+    l_energy_counter: "Tipo de contador de energía", l_price_hc: "Precio valle (€/kWh)", l_price_hp: "Precio punta (€/kWh)", l_solar_power: "Potencia solar (W)", l_solar_energy: "Producción solar del día (kWh)",
+    l_energy: "Producción del día (kWh)", l_export_energy: "Energía vendida del día (kWh)", l_price_self: "Valor del kWh autoconsumido (€/kWh)", l_price_export: "Precio de compensación (€/kWh)", l_forecast: "Previsión de producción del día (kWh)",
+    l_max_power: "Potencia máxima (W)", l_scale: "Graduaciones (W, separadas por comas)", l_rotate_seconds: "Rotación automática (segundos, 0 = desactivada)", l_size: "Diámetro máximo (px, 0 = auto)", l_show_frame: "Mostrar el marco de la tarjeta",
+    l_hc_display: "Indicador horas valle / punta", l_hc_pages: "Fondo coloreado en", l_hc_source: "Fuente (automática si está vacía: HOLM HP/HC o contadores valle / punta)", l_hc_values: "Valores que significan «horas valle»", l_tariff: "Tarifa",
+    l_energy_tempo: "Energía {c} {p} (kWh)", l_price_tempo: "Precio {c} {p} (€/kWh)", l_tempo_color: "Color del día (automático si está vacío: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Color de mañana (automático si está vacío)",
+    l_c_tempo: "Color — día {c}", l_c_hc: "Color — horas valle", l_c_hp: "Color — horas punta", l_c_power: "Color — tiempo real", l_c_today: "Color — hoy", l_c_week: "Color — 7 días", l_c_solar: "Color — solar", l_c_self: "Color — autoconsumo",
+    l_language: "Idioma", auto: "Automático (perfil)",
+    o_hchp: "Horas valle / horas punta", o_tempo: "Tempo (EDF)", o_top: "Arriba", o_bottom: "Abajo", o_conso: "Consumo", o_solar: "Producción solar",
+    o_auto: "Automático", o_daily: "Se reinicia cada día (Ecojoko…)", o_total: "Índice acumulado (Linky, ZLinky…)",
+    o_text: "Texto «Horas valle / punta» (o «Día Azul · Valle») en la esfera", o_color: "Fondo del disco verde / naranja (o color Tempo)", o_both: "Texto y fondo", o_none: "Ninguno", o_pg_power: "La página de potencia", o_pg_all: "Todas las páginas",
+    s_entities: "Entidades", s_hc: "Horas valle / punta y Tempo", s_dial: "Esfera y visualización", s_colors: "Colores",
+    card_name: "HOLM – Esfera Ecojoko", card_desc: "Esfera de consumo / producción solar estilo Ecojoko, adaptada al tema" },
+  it: { bleu: "Blu", blanc: "Bianco", rouge: "Rosso", hc: "F. punta", hp: "Punta", hc_long: "Fuori punta", hp_long: "Ore di punta", day_col: "Giorno {c}", watts: "watt",
+    prod_rt: "Produzione<br>in tempo reale", forecast_day: "Previsione di oggi {x} kWh", kwh_produced: "{x} kWh prodotti", cons: "Consumo {x}", resale: "Immessi {x}", today: "Oggi", over7: "Ultimi 7 giorni",
+    selfcons: "Autoconsumo", kwh_consumed: "{x} kWh consumati", kwh_sold: "{x} kWh immessi", power_rt: "Potenza<br>in tempo reale", w_produced: "☀ {x} W prodotti", tomorrow: "Domani: {c}",
+    solar_prod: "Produzione<br>solare", kwh_today: "{x} kWh oggi", selfcons_pct: "Autoconsumo {x}%", error: "Errore",
+    l_title: "Titolo", l_title_position: "Posizione del titolo", l_mode: "Tipo di quadrante", l_power: "Potenza in tempo reale (W)", l_energy_hc: "Energia fuori punta (kWh)", l_energy_hp: "Energia di punta (kWh)",
+    l_energy_counter: "Tipo di contatore di energia", l_price_hc: "Prezzo fuori punta (€/kWh)", l_price_hp: "Prezzo di punta (€/kWh)", l_solar_power: "Potenza solare (W)", l_solar_energy: "Produzione solare di oggi (kWh)",
+    l_energy: "Produzione di oggi (kWh)", l_export_energy: "Energia immessa oggi (kWh)", l_price_self: "Valore del kWh autoconsumato (€/kWh)", l_price_export: "Prezzo di ritiro (€/kWh)", l_forecast: "Previsione di produzione di oggi (kWh)",
+    l_max_power: "Potenza massima (W)", l_scale: "Tacche (W, separate da virgole)", l_rotate_seconds: "Scorrimento automatico (secondi, 0 = disattivato)", l_size: "Diametro massimo (px, 0 = automatico)", l_show_frame: "Mostra la cornice della scheda",
+    l_hc_display: "Indicatore fuori punta / punta", l_hc_pages: "Sfondo colorato su", l_hc_source: "Fonte (automatica se vuota: HOLM HP/HC o contatori a fasce)", l_hc_values: "Valori che indicano «fuori punta»", l_tariff: "Tariffa",
+    l_energy_tempo: "Energia {c} {p} (kWh)", l_price_tempo: "Prezzo {c} {p} (€/kWh)", l_tempo_color: "Colore di oggi (automatico se vuoto: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Colore di domani (automatico se vuoto)",
+    l_c_tempo: "Colore — giorno {c}", l_c_hc: "Colore — fuori punta", l_c_hp: "Colore — ore di punta", l_c_power: "Colore — tempo reale", l_c_today: "Colore — oggi", l_c_week: "Colore — 7 giorni", l_c_solar: "Colore — solare", l_c_self: "Colore — autoconsumo",
+    l_language: "Lingua", auto: "Automatica (profilo)",
+    o_hchp: "Fuori punta / ore di punta", o_tempo: "Tempo (EDF)", o_top: "In alto", o_bottom: "In basso", o_conso: "Consumo", o_solar: "Produzione solare",
+    o_auto: "Automatico", o_daily: "Azzerato ogni giorno (Ecojoko…)", o_total: "Indice cumulato (Linky, ZLinky…)",
+    o_text: "Testo «Fuori punta / Ore di punta» (o «Giorno Blu · F. punta») sul quadrante", o_color: "Sfondo del disco verde / arancione (o colore Tempo)", o_both: "Testo e sfondo", o_none: "Nessuno", o_pg_power: "La pagina potenza", o_pg_all: "Tutte le pagine",
+    s_entities: "Entità", s_hc: "Fuori punta / punta e Tempo", s_dial: "Quadrante e visualizzazione", s_colors: "Colori",
+    card_name: "HOLM – Quadrante Ecojoko", card_desc: "Quadrante consumo / produzione solare in stile Ecojoko, adattato al tema" },
+  nl: { bleu: "Blauw", blanc: "Wit", rouge: "Rood", hc: "Dal", hp: "Piek", hc_long: "Daltarief", hp_long: "Piektarief", day_col: "Dag {c}", watts: "watt",
+    prod_rt: "Opwekking<br>realtime", forecast_day: "Verwachting vandaag {x} kWh", kwh_produced: "{x} kWh opgewekt", cons: "Verbr. {x}", resale: "Terug {x}", today: "Vandaag", over7: "Laatste 7 dagen",
+    selfcons: "Eigen verbruik", kwh_consumed: "{x} kWh verbruikt", kwh_sold: "{x} kWh teruggeleverd", power_rt: "Vermogen<br>realtime", w_produced: "☀ {x} W opgewekt", tomorrow: "Morgen: {c}",
+    solar_prod: "Zonne-<br>opwekking", kwh_today: "{x} kWh vandaag", selfcons_pct: "Eigen verbruik {x}%", error: "Fout",
+    l_title: "Titel", l_title_position: "Positie van de titel", l_mode: "Type meter", l_power: "Realtime vermogen (W)", l_energy_hc: "Energie dal (kWh)", l_energy_hp: "Energie piek (kWh)",
+    l_energy_counter: "Type energiemeter", l_price_hc: "Prijs dal (€/kWh)", l_price_hp: "Prijs piek (€/kWh)", l_solar_power: "Zonnevermogen (W)", l_solar_energy: "Zonne-opwekking vandaag (kWh)",
+    l_energy: "Opwekking vandaag (kWh)", l_export_energy: "Vandaag teruggeleverde energie (kWh)", l_price_self: "Waarde van een zelf verbruikte kWh (€/kWh)", l_price_export: "Terugleververgoeding (€/kWh)", l_forecast: "Verwachte opwekking vandaag (kWh)",
+    l_max_power: "Maximaal vermogen (W)", l_scale: "Schaalverdeling (W, gescheiden door komma's)", l_rotate_seconds: "Automatisch wisselen (seconden, 0 = uit)", l_size: "Maximale diameter (px, 0 = automatisch)", l_show_frame: "Kaartkader tonen",
+    l_hc_display: "Indicator dal / piek", l_hc_pages: "Gekleurde achtergrond op", l_hc_source: "Bron (automatisch indien leeg: HOLM HP/HC of dal/piek-meters)", l_hc_values: "Waarden die ‘daltarief’ betekenen", l_tariff: "Tarief",
+    l_energy_tempo: "Energie {c} {p} (kWh)", l_price_tempo: "Prijs {c} {p} (€/kWh)", l_tempo_color: "Kleur van vandaag (automatisch indien leeg: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Kleur van morgen (automatisch indien leeg)",
+    l_c_tempo: "Kleur — dag {c}", l_c_hc: "Kleur — daltarief", l_c_hp: "Kleur — piektarief", l_c_power: "Kleur — realtime", l_c_today: "Kleur — vandaag", l_c_week: "Kleur — 7 dagen", l_c_solar: "Kleur — zon", l_c_self: "Kleur — eigen verbruik",
+    l_language: "Taal", auto: "Automatisch (profiel)",
+    o_hchp: "Dal- / piekuren", o_tempo: "Tempo (EDF)", o_top: "Boven", o_bottom: "Onder", o_conso: "Verbruik", o_solar: "Zonne-opwekking",
+    o_auto: "Automatisch", o_daily: "Elke dag op nul gezet (Ecojoko…)", o_total: "Cumulatieve meterstand (Linky, ZLinky…)",
+    o_text: "Tekst ‘Daltarief / Piektarief’ (of ‘Blauwe dag · Dal’) op de meter", o_color: "Groene / oranje achtergrond (of Tempo-kleur)", o_both: "Tekst en achtergrond", o_none: "Geen", o_pg_power: "De vermogenspagina", o_pg_all: "Alle pagina's",
+    s_entities: "Entiteiten", s_hc: "Dal- / piekuren en Tempo", s_dial: "Meter en weergave", s_colors: "Kleuren",
+    card_name: "HOLM – Ecojoko-meter", card_desc: "Verbruiks- / zonne-opwekkingsmeter in Ecojoko-stijl, passend bij je thema" },
+  pt: { bleu: "Azul", blanc: "Branco", rouge: "Vermelho", hc: "Vazio", hp: "Cheias", hc_long: "Horas de vazio", hp_long: "Horas cheias", day_col: "Dia {c}", watts: "watts",
+    prod_rt: "Produção<br>em tempo real", forecast_day: "Previsão do dia {x} kWh", kwh_produced: "{x} kWh produzidos", cons: "Consumo {x}", resale: "Venda {x}", today: "Hoje", over7: "Últimos 7 dias",
+    selfcons: "Autoconsumo", kwh_consumed: "{x} kWh consumidos", kwh_sold: "{x} kWh vendidos", power_rt: "Potência<br>em tempo real", w_produced: "☀ {x} W produzidos", tomorrow: "Amanhã: {c}",
+    solar_prod: "Produção<br>solar", kwh_today: "{x} kWh hoje", selfcons_pct: "Autoconsumo {x}%", error: "Erro",
+    l_title: "Título", l_title_position: "Posição do título", l_mode: "Tipo de mostrador", l_power: "Potência em tempo real (W)", l_energy_hc: "Energia de vazio (kWh)", l_energy_hp: "Energia de cheias (kWh)",
+    l_energy_counter: "Tipo de contador de energia", l_price_hc: "Preço de vazio (€/kWh)", l_price_hp: "Preço de cheias (€/kWh)", l_solar_power: "Potência solar (W)", l_solar_energy: "Produção solar do dia (kWh)",
+    l_energy: "Produção do dia (kWh)", l_export_energy: "Energia vendida do dia (kWh)", l_price_self: "Valor do kWh autoconsumido (€/kWh)", l_price_export: "Preço de venda (€/kWh)", l_forecast: "Previsão de produção do dia (kWh)",
+    l_max_power: "Potência máxima (W)", l_scale: "Graduações (W, separadas por vírgulas)", l_rotate_seconds: "Rotação automática (segundos, 0 = desativada)", l_size: "Diâmetro máximo (px, 0 = auto)", l_show_frame: "Mostrar a moldura do cartão",
+    l_hc_display: "Indicador vazio / cheias", l_hc_pages: "Fundo colorido em", l_hc_source: "Fonte (automática se vazia: HOLM HP/HC ou contadores vazio / cheias)", l_hc_values: "Valores que significam «vazio»", l_tariff: "Tarifa",
+    l_energy_tempo: "Energia {c} {p} (kWh)", l_price_tempo: "Preço {c} {p} (€/kWh)", l_tempo_color: "Cor do dia (automática se vazia: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Cor de amanhã (automática se vazia)",
+    l_c_tempo: "Cor — dia {c}", l_c_hc: "Cor — horas de vazio", l_c_hp: "Cor — horas cheias", l_c_power: "Cor — tempo real", l_c_today: "Cor — hoje", l_c_week: "Cor — 7 dias", l_c_solar: "Cor — solar", l_c_self: "Cor — autoconsumo",
+    l_language: "Idioma", auto: "Automático (perfil)",
+    o_hchp: "Horas de vazio / cheias", o_tempo: "Tempo (EDF)", o_top: "Em cima", o_bottom: "Em baixo", o_conso: "Consumo", o_solar: "Produção solar",
+    o_auto: "Automático", o_daily: "Reposto a zero todos os dias (Ecojoko…)", o_total: "Índice acumulado (Linky, ZLinky…)",
+    o_text: "Texto «Horas de vazio / cheias» (ou «Dia Azul · Vazio») no mostrador", o_color: "Fundo do disco verde / laranja (ou cor Tempo)", o_both: "Texto e fundo", o_none: "Nenhum", o_pg_power: "A página de potência", o_pg_all: "Todas as páginas",
+    s_entities: "Entidades", s_hc: "Horas de vazio / cheias e Tempo", s_dial: "Mostrador e apresentação", s_colors: "Cores",
+    card_name: "HOLM – Mostrador Ecojoko", card_desc: "Mostrador de consumo / produção solar ao estilo Ecojoko, adaptado ao tema" },
+  pl: { bleu: "Niebieski", blanc: "Biały", rouge: "Czerwony", hc: "Poza szczytem", hp: "Szczyt", hc_long: "Strefa pozaszczytowa", hp_long: "Strefa szczytowa", day_col: "Dzień {c}", watts: "waty",
+    prod_rt: "Produkcja<br>na żywo", forecast_day: "Prognoza na dziś {x} kWh", kwh_produced: "{x} kWh wyprodukowano", cons: "Zużycie {x}", resale: "Oddano {x}", today: "Dziś", over7: "Ostatnie 7 dni",
+    selfcons: "Autokonsumpcja", kwh_consumed: "{x} kWh zużyto", kwh_sold: "{x} kWh oddano", power_rt: "Moc<br>na żywo", w_produced: "☀ {x} W produkcji", tomorrow: "Jutro: {c}",
+    solar_prod: "Produkcja<br>PV", kwh_today: "{x} kWh dziś", selfcons_pct: "Autokonsumpcja {x}%", error: "Błąd",
+    l_title: "Tytuł", l_title_position: "Położenie tytułu", l_mode: "Rodzaj tarczy", l_power: "Moc na żywo (W)", l_energy_hc: "Energia poza szczytem (kWh)", l_energy_hp: "Energia w szczycie (kWh)",
+    l_energy_counter: "Rodzaj licznika energii", l_price_hc: "Cena poza szczytem (€/kWh)", l_price_hp: "Cena w szczycie (€/kWh)", l_solar_power: "Moc PV (W)", l_solar_energy: "Dzisiejsza produkcja PV (kWh)",
+    l_energy: "Dzisiejsza produkcja (kWh)", l_export_energy: "Energia oddana dziś (kWh)", l_price_self: "Wartość zużytej na miejscu kWh (€/kWh)", l_price_export: "Cena odkupu (€/kWh)", l_forecast: "Prognoza produkcji na dziś (kWh)",
+    l_max_power: "Moc maksymalna (W)", l_scale: "Podziałka (W, oddzielona przecinkami)", l_rotate_seconds: "Automatyczne przewijanie (sekundy, 0 = wył.)", l_size: "Maksymalna średnica (px, 0 = auto)", l_show_frame: "Pokaż ramkę karty",
+    l_hc_display: "Wskaźnik strefy pozaszczytowej / szczytowej", l_hc_pages: "Kolorowe tło na", l_hc_source: "Źródło (automatycznie, jeśli puste: HOLM HP/HC lub liczniki stref)", l_hc_values: "Wartości oznaczające „poza szczytem”", l_tariff: "Taryfa",
+    l_energy_tempo: "Energia {c} {p} (kWh)", l_price_tempo: "Cena {c} {p} (€/kWh)", l_tempo_color: "Kolor dnia (automatycznie, jeśli puste: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Kolor jutra (automatycznie, jeśli puste)",
+    l_c_tempo: "Kolor — dzień {c}", l_c_hc: "Kolor — poza szczytem", l_c_hp: "Kolor — szczyt", l_c_power: "Kolor — na żywo", l_c_today: "Kolor — dziś", l_c_week: "Kolor — 7 dni", l_c_solar: "Kolor — PV", l_c_self: "Kolor — autokonsumpcja",
+    l_language: "Język", auto: "Automatycznie (profil)",
+    o_hchp: "Strefa pozaszczytowa / szczytowa", o_tempo: "Tempo (EDF)", o_top: "Na górze", o_bottom: "Na dole", o_conso: "Zużycie", o_solar: "Produkcja PV",
+    o_auto: "Automatycznie", o_daily: "Zerowany codziennie (Ecojoko…)", o_total: "Narastający stan licznika (Linky, ZLinky…)",
+    o_text: "Tekst „Poza szczytem / Szczyt” (lub „Dzień niebieski · Poza szczytem”) na tarczy", o_color: "Zielone / pomarańczowe tło (lub kolor Tempo)", o_both: "Tekst i tło", o_none: "Brak", o_pg_power: "Strona mocy", o_pg_all: "Wszystkie strony",
+    s_entities: "Encje", s_hc: "Strefy taryfowe i Tempo", s_dial: "Tarcza i wyświetlanie", s_colors: "Kolory",
+    card_name: "HOLM – Tarcza Ecojoko", card_desc: "Tarcza zużycia / produkcji PV w stylu Ecojoko, dopasowana do motywu" },
+};
+const LANG_NAMES = { fr: "Français", en: "English", de: "Deutsch", es: "Español", it: "Italiano", nl: "Nederlands", pt: "Português", pl: "Polski" };
+const LOCALES = { fr: "fr-FR", en: "en-GB", de: "de-DE", es: "es-ES", it: "it-IT", nl: "nl-NL", pt: "pt-PT", pl: "pl-PL" };
+// langue : option `language` de la carte, sinon celle du profil Home Assistant ; anglais si non traduite
+const langOf = (hass, c) => { const l = String((c && c.language) || hass?.locale?.language || hass?.language || navigator.language || "en").toLowerCase().split(/[-_]/)[0]; return I18N[l] ? l : "en"; };
+const tr = (l, k, v) => { let s = (I18N[l] && I18N[l][k]) ?? I18N.en[k] ?? I18N.fr[k] ?? k; if (v) for (const [a, b] of Object.entries(v)) s = s.replace("{" + a + "}", b); return s; };
+let NUMLOC = "fr-FR";
+const setLoc = (hass, c) => { const l = langOf(hass, c); const p = hass?.locale?.language; NUMLOC = !(c && c.language) && p && p.toLowerCase().startsWith(l) ? p : LOCALES[l]; return l; };
+const fmtNum = (v, d = 0) => Number(v).toLocaleString(NUMLOC, { minimumFractionDigits: d, maximumFractionDigits: d });
 const TEMPO = ["bleu", "blanc", "rouge"];
-const TEMPO_LABEL = { bleu: "Bleu", blanc: "Blanc", rouge: "Rouge" };
 // couleur Tempo depuis une valeur d'entité (Bleu, BLUE, TEMPO_ROUGE, HCJB, 1/2/3…)
 const tempoOf = (v) => {
   const x = String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
@@ -29,7 +174,7 @@ const tempoOf = (v) => {
   if (/rouge|red|jr$|^3$/.test(x)) return "rouge";
   return null;
 };
-const fmtK = (v) => (v >= 1000 ? (v / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + "K" : String(v));
+const fmtK = (v) => (v >= 1000 ? (v / 1000).toLocaleString(NUMLOC, { maximumFractionDigits: 1 }) + "K" : String(v));
 
 class HolmEcojokoCard extends HTMLElement {
   setConfig(c) {
@@ -155,8 +300,9 @@ class HolmEcojokoCard extends HTMLElement {
       (this._prev = this._prev || {})[k.id] = v;
     }
   }
+  _t(k, v) { return tr(this._l || langOf(this._hass, this._c), k, v); }
   set hass(h) {
-    this._hass = h;
+    this._hass = h; this._l = setLoc(h, this._c);
     this._trackCounters();
     if (!this.shadowRoot) { this.attachShadow({ mode: "open" }); this._render(true); this._startTimer(); }
     const c = this._c;
@@ -281,10 +427,10 @@ class HolmEcojokoCard extends HTMLElement {
     // « Heures creuses / pleines » sous l'aiguille, à la place de « watts » (la valeur affiche déjà les W)
     if ((hcNow !== null || tCol) && (c.hc_display === "text" || c.hc_display === "both")) {
       const [hx, hy] = this._pt(101, 90);
-      const per = hcNow === null ? "" : hcNow ? "Heures creuses" : "Heures pleines";
-      const txt = tCol ? `Jour ${TEMPO_LABEL[tCol]}${per ? " · " + (hcNow ? "HC" : "HP") : ""}` : per;
+      const per = hcNow === null ? "" : this._t(hcNow ? "hc_long" : "hp_long");
+      const txt = tCol ? `${this._t("day_col", { c: this._t(tCol) })}${per ? " · " + this._t(hcNow ? "hc" : "hp") : ""}` : per;
       svg += `<text x="${hx}" y="${hy}" class="hcl" style="fill:${tCol === "blanc" ? "var(--primary-text-color)" : hcCol}">${txt}</text>`;
-    } else svg += `<text x="${ux}" y="${uy}" class="unit">watts</text>`;
+    } else svg += `<text x="${ux}" y="${uy}" class="unit">${this._t("watts")}</text>`;
     // anneau bas (écart %)
     const dp = this._stats?.deltaPct;
     svg += `<path d="${this._arc(128, 215, 325)}" class="trk"/>`;
@@ -324,25 +470,25 @@ class HolmEcojokoCard extends HTMLElement {
           spark = `<svg class="spark" viewBox="0 0 140 40"><polyline points="${ptsS.join(" ")}"/></svg>`;
         }
         const fc = this._num(c.forecast);
-        body = `<div class="t1">Production<br>temps réel</div><div class="big">${isNaN(P) ? "—" : fmtNum(P)} W</div>
-          ${!isNaN(fc) ? `<div class="sub">Prévision du jour ${fmtNum(fc, 1)} kWh</div>` : ""}${spark}`;
+        body = `<div class="t1">${this._t("prod_rt")}</div><div class="big">${isNaN(P) ? "—" : fmtNum(P)} W</div>
+          ${!isNaN(fc) ? `<div class="sub">${this._t("forecast_day", { x: fmtNum(fc, 1) })}</div>` : ""}${spark}`;
       } else if (s === "today") {
         color = col.today;
-        body = `<div class="big">${fmtNum(selfK * ps + exp * pe, 2)} €</div><div class="mid">${fmtNum(prod, 1)} kWh produits</div>
-          <div class="split"><span>Conso ${fmtNum(selfK, 1)}</span><span>Revente ${fmtNum(exp, 1)}</span></div>
-          <div class="t2">Aujourd'hui</div>`;
+        body = `<div class="big">${fmtNum(selfK * ps + exp * pe, 2)} €</div><div class="mid">${this._t("kwh_produced", { x: fmtNum(prod, 1) })}</div>
+          <div class="split"><span>${this._t("cons", { x: fmtNum(selfK, 1) })}</span><span>${this._t("resale", { x: fmtNum(exp, 1) })}</span></div>
+          <div class="t2">${this._t("today")}</div>`;
       } else if (s === "week") {
         color = col.week;
         const w = this._stats?.week || [];
         const eur = w.reduce((a, x) => a + x.eur, 0), kwh = w.reduce((a, x) => a + x.kwh, 0), mx = Math.max(...w.map((x) => x.kwh), 0.001);
         body = `<div class="big">${w.length ? fmtNum(eur, 2) + " €" : "…"}</div><div class="mid">${w.length ? fmtNum(kwh, 1) + " kWh" : ""}</div>
-          <div class="bars">${w.map((x) => `<i style="height:${Math.max(6, (x.kwh / mx) * 100)}%" title="${new Date(x.t).toLocaleDateString("fr-FR", { weekday: "long" })} : ${fmtNum(x.kwh, 1)} kWh"></i>`).join("")}</div>
-          <div class="t2">Sur 7 jours</div>`;
+          <div class="bars">${w.map((x) => `<i style="height:${Math.max(6, (x.kwh / mx) * 100)}%" title="${new Date(x.t).toLocaleDateString(NUMLOC, { weekday: "long" })} : ${fmtNum(x.kwh, 1)} kWh"></i>`).join("")}</div>
+          <div class="t2">${this._t("over7")}</div>`;
       } else {
         color = col.self;
         const pct = prod > 0 ? (selfK / prod) * 100 : NaN;
-        body = `<div class="t1">Autoconsommation</div><div class="big">${isNaN(pct) ? "—" : fmtNum(pct) + " %"}</div>
-          <div class="sub">${fmtNum(selfK, 1)} kWh consommés</div><div class="sub">${fmtNum(exp, 1)} kWh revendus</div>`;
+        body = `<div class="t1">${this._t("selfcons")}</div><div class="big">${isNaN(pct) ? "—" : fmtNum(pct) + " %"}</div>
+          <div class="sub">${this._t("kwh_consumed", { x: fmtNum(selfK, 1) })}</div><div class="sub">${this._t("kwh_sold", { x: fmtNum(exp, 1) })}</div>`;
       }
     } else if (s === "power") {
       color = col.power;
@@ -356,29 +502,29 @@ class HolmEcojokoCard extends HTMLElement {
       }
       const sol = c.solar_power ? this._num(c.solar_power) : NaN;
       const tTom = this._tempo ? this._tempoColor(true) : null;
-      body = `<div class="t1">Puissance<br>temps réel</div><div class="big">${isNaN(P) ? "—" : fmtNum(P)} W</div>
-        ${!isNaN(sol) ? `<div class="sub">☀ ${fmtNum(sol)} W produits</div>` : ""}
-        ${tTom ? `<div class="sub tom"><i style="background:${col[tTom]}"></i>Demain : ${TEMPO_LABEL[tTom]}</div>` : ""}${spark}`;
+      body = `<div class="t1">${this._t("power_rt")}</div><div class="big">${isNaN(P) ? "—" : fmtNum(P)} W</div>
+        ${!isNaN(sol) ? `<div class="sub">${this._t("w_produced", { x: fmtNum(sol) })}</div>` : ""}
+        ${tTom ? `<div class="sub tom"><i style="background:${col[tTom]}"></i>${this._t("tomorrow", { c: this._t(tTom) })}</div>` : ""}${spark}`;
     } else if (s === "today") {
       color = col.today;
       const tDay = this._tempo ? this._tempoColor(false) : null;
       body = `<div class="big">${fmtNum(eurToday, 2)} €</div><div class="mid">${fmtNum(kwhToday, 1)} kWh</div>
-        <div class="split"><span>HC ${fmtNum(kHC, 1)}${nCnt >= 2 && kwhToday > 0 ? ` · ${fmtNum((kHC / kwhToday) * 100)} %` : ""}</span><span>HP ${fmtNum(kHP, 1)}</span></div>
-        <div class="t2">Aujourd'hui${tDay ? ` · ${TEMPO_LABEL[tDay]}` : ""}</div>`;
+        <div class="split"><span>${this._t("hc")} ${fmtNum(kHC, 1)}${nCnt >= 2 && kwhToday > 0 ? ` · ${fmtNum((kHC / kwhToday) * 100)} %` : ""}</span><span>${this._t("hp")} ${fmtNum(kHP, 1)}</span></div>
+        <div class="t2">${this._t("today")}${tDay ? ` · ${this._t(tDay)}` : ""}</div>`;
     } else if (s === "week") {
       color = col.week;
       const w = this._stats?.week || [];
       const eur = w.reduce((a, x) => a + x.eur, 0), kwh = w.reduce((a, x) => a + x.kwh, 0), mx = Math.max(...w.map((x) => x.kwh), 0.001);
       body = `<div class="big">${w.length ? fmtNum(eur, 2) + " €" : "…"}</div><div class="mid">${w.length ? fmtNum(kwh, 1) + " kWh" : ""}</div>
-        <div class="bars">${w.map((x) => `<i class="${x.col ? "tc" : ""}" style="height:${Math.max(6, (x.kwh / mx) * 100)}%${x.col ? `;background:${x.col === "blanc" ? "#f4f6f8" : col[x.col]}` : ""}" title="${new Date(x.t).toLocaleDateString("fr-FR", { weekday: "long" })}${x.col ? ` (${TEMPO_LABEL[x.col]})` : ""} : ${fmtNum(x.kwh, 1)} kWh · ${fmtNum(x.eur, 2)} €"></i>`).join("")}</div>
-        <div class="t2">Sur 7 jours</div>`;
+        <div class="bars">${w.map((x) => `<i class="${x.col ? "tc" : ""}" style="height:${Math.max(6, (x.kwh / mx) * 100)}%${x.col ? `;background:${x.col === "blanc" ? "#f4f6f8" : col[x.col]}` : ""}" title="${new Date(x.t).toLocaleDateString(NUMLOC, { weekday: "long" })}${x.col ? ` (${this._t(x.col)})` : ""} : ${fmtNum(x.kwh, 1)} kWh · ${fmtNum(x.eur, 2)} €"></i>`).join("")}</div>
+        <div class="t2">${this._t("over7")}</div>`;
     } else if (s === "solar") {
       color = col.solar;
       const sp = this._num(c.solar_power), se = this._kwh(c.solar_energy), ex = this._day(c.export_energy);
       const auto = !isNaN(se) && se > 0 && !isNaN(ex) ? Math.max(0, Math.min(100, ((se - ex) / se) * 100)) : NaN;
-      body = `<div class="t1">Production<br>solaire</div><div class="big">${isNaN(sp) ? "—" : fmtNum(sp)} W</div>
-        ${!isNaN(se) ? `<div class="sub">${fmtNum(se, 1)} kWh aujourd'hui</div>` : ""}
-        ${!isNaN(auto) ? `<div class="sub">Autoconsommation ${fmtNum(auto)} %</div>` : ""}`;
+      body = `<div class="t1">${this._t("solar_prod")}</div><div class="big">${isNaN(sp) ? "—" : fmtNum(sp)} W</div>
+        ${!isNaN(se) ? `<div class="sub">${this._t("kwh_today", { x: fmtNum(se, 1) })}</div>` : ""}
+        ${!isNaN(auto) ? `<div class="sub">${this._t("selfcons_pct", { x: fmtNum(auto) })}</div>` : ""}`;
     }
     // fond du disque aux couleurs heures creuses / pleines
     if (hcCol && (c.hc_display === "color" || c.hc_display === "both") && (c.hc_pages === "all" || s === "power")) color = hcCol;
@@ -451,7 +597,7 @@ class HolmEcojokoCard extends HTMLElement {
     disc.querySelector(".content").innerHTML = body;
     disc.querySelector(".content").style.cssText = "display:flex;flex-direction:column;align-items:center;width:100%;margin-top:-6%";
     disc.querySelector(".dots").innerHTML = dots;
-    this._root.querySelector(".err").textContent = this._err ? "Erreur : " + this._err : "";
+    this._root.querySelector(".err").textContent = this._err ? this._t("error") + " : " + this._err : "";
     const pos = c.title_position || "top";
     this.shadowRoot.querySelector("ha-card").classList.toggle("noframe", c.show_frame === false);
     this.shadowRoot.querySelector(".t-top").textContent = c.title && pos === "top" ? c.title : "";
@@ -479,24 +625,13 @@ class HolmEcojokoCard extends HTMLElement {
 }
 
 // ---------------- Éditeur visuel ----------------
-const LABELS = {
-  title: "Titre", title_position: "Position du titre", mode: "Type de cadran",
-  power: "Puissance temps réel (W)", energy_hc: "Énergie HC (kWh)", energy_hp: "Énergie HP (kWh)",
-  energy_counter: "Type de compteur d'énergie",
-  price_hc: "Prix HC (€/kWh)", price_hp: "Prix HP (€/kWh)", solar_power: "Puissance solaire (W)", solar_energy: "Production solaire du jour (kWh)",
-  energy: "Production du jour (kWh)", export_energy: "Énergie revendue du jour (kWh)", price_self: "Valeur du kWh autoconsommé (€/kWh)",
-  price_export: "Prix de rachat (€/kWh)", forecast: "Prévision de production du jour (kWh)",
-  max_power: "Puissance maximale (W)", scale: "Graduations (W, séparées par des virgules)", rotate_seconds: "Défilement automatique (secondes, 0 = désactivé)",
-  size: "Diamètre maximum (px, 0 = auto)", show_frame: "Afficher le cadre de la carte",
-  hc_display: "Indicateur heures creuses / pleines", hc_pages: "Fond coloré sur", hc_source: "Source (automatique si vide : HOLM HP/HC ou compteurs HC / HP)",
-  hc_values: "Valeurs signifiant « heures creuses »", tariff: "Option tarifaire",
-  energy_bleu_hc: "Énergie Bleu HC (kWh)", energy_bleu_hp: "Énergie Bleu HP (kWh)", energy_blanc_hc: "Énergie Blanc HC (kWh)",
-  energy_blanc_hp: "Énergie Blanc HP (kWh)", energy_rouge_hc: "Énergie Rouge HC (kWh)", energy_rouge_hp: "Énergie Rouge HP (kWh)",
-  price_bleu_hc: "Prix Bleu HC (€/kWh)", price_bleu_hp: "Prix Bleu HP (€/kWh)", price_blanc_hc: "Prix Blanc HC (€/kWh)",
-  price_blanc_hp: "Prix Blanc HP (€/kWh)", price_rouge_hc: "Prix Rouge HC (€/kWh)", price_rouge_hp: "Prix Rouge HP (€/kWh)",
-  tempo_color: "Couleur du jour (automatique si vide : RTE Tempo, HOLM HP/HC…)", tempo_color_tomorrow: "Couleur de demain (automatique si vide)",
-  c_bleu: "Couleur — jour Bleu", c_blanc: "Couleur — jour Blanc", c_rouge: "Couleur — jour Rouge", c_hc: "Couleur — heures creuses", c_hp: "Couleur — heures pleines",
-  c_power: "Couleur — temps réel", c_today: "Couleur — aujourd'hui", c_week: "Couleur — 7 jours", c_solar: "Couleur — solaire", c_self: "Couleur — autoconsommation",
+// libellé d'un champ de l'éditeur dans la langue choisie
+const labelOf = (l, n) => {
+  let m = /^(energy|price)_(bleu|blanc|rouge)_(hc|hp)$/.exec(n);
+  if (m) return tr(l, m[1] === "energy" ? "l_energy_tempo" : "l_price_tempo", { c: tr(l, m[2]), p: tr(l, m[3]) });
+  m = /^c_(bleu|blanc|rouge)$/.exec(n);
+  if (m) return tr(l, "l_c_tempo", { c: tr(l, m[1]) });
+  return tr(l, "l_" + n);
 };
 const ent = (domains) => ({ entity: { domain: domains } });
 const hex2rgb = (h) => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!m) return undefined; const n = parseInt(m[1], 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
@@ -505,6 +640,7 @@ class HolmEcojokoCardEditor extends HTMLElement {
   setConfig(c) { this._config = { ...c }; this._update(); }
   set hass(h) { this._hass = h; this._update(); }
   _schema(solar, tempo) {
+    const l = langOf(this._hass, this._config), L = (k) => tr(l, k);
     const colorKeys = solar ? ["power", "today", "week", "self", "hc", "hp"] : ["power", "today", "week", "solar", "hc", "hp", ...(tempo ? ["bleu", "blanc", "rouge"] : [])];
     const priceSel = ent(["sensor", "input_number", "number"]);
     const tariffEnt = tempo ? [
@@ -528,7 +664,7 @@ class HolmEcojokoCardEditor extends HTMLElement {
       { name: "forecast", selector: ent(["sensor"]) },
     ] : [
       { name: "power", required: true, selector: ent(["sensor"]) },
-      { name: "tariff", selector: { select: { mode: "dropdown", options: [{ value: "hchp", label: "Heures creuses / heures pleines" }, { value: "tempo", label: "Tempo (EDF)" }] } } },
+      { name: "tariff", selector: { select: { mode: "dropdown", options: [{ value: "hchp", label: L("o_hchp") }, { value: "tempo", label: L("o_tempo") }] } } },
       ...tariffEnt,
       { name: "solar_power", selector: ent(["sensor"]) },
       { name: "solar_energy", selector: ent(["sensor"]) },
@@ -537,23 +673,23 @@ class HolmEcojokoCardEditor extends HTMLElement {
     return [
       { type: "grid", name: "", schema: [
         { name: "title", selector: { text: {} } },
-        { name: "title_position", selector: { select: { mode: "dropdown", options: [{ value: "top", label: "En haut" }, { value: "bottom", label: "En bas" }] } } },
+        { name: "title_position", selector: { select: { mode: "dropdown", options: [{ value: "top", label: L("o_top") }, { value: "bottom", label: L("o_bottom") }] } } },
       ] },
-      { name: "mode", selector: { select: { mode: "dropdown", options: [{ value: "conso", label: "Consommation" }, { value: "solar", label: "Production solaire" }] } } },
-      { type: "expandable", title: "Entités", icon: "mdi:flash", flatten: true, expanded: true, schema: [...entities,
+      { name: "mode", selector: { select: { mode: "dropdown", options: [{ value: "conso", label: L("o_conso") }, { value: "solar", label: L("o_solar") }] } } },
+      { type: "expandable", title: L("s_entities"), icon: "mdi:flash", flatten: true, expanded: true, schema: [...entities,
         { name: "energy_counter", selector: { select: { mode: "dropdown", options: [
-          { value: "auto", label: "Automatique" },
-          { value: "daily", label: "Remis à zéro chaque jour (Ecojoko…)" },
-          { value: "total", label: "Index cumulé (Linky, ZLinky…)" }] } } }] },
-      { type: "expandable", title: "Heures creuses / pleines et Tempo", icon: "mdi:leaf-circle-outline", flatten: true, schema: [
+          { value: "auto", label: L("o_auto") },
+          { value: "daily", label: L("o_daily") },
+          { value: "total", label: L("o_total") }] } } }] },
+      { type: "expandable", title: L("s_hc"), icon: "mdi:leaf-circle-outline", flatten: true, schema: [
         { name: "hc_display", selector: { select: { mode: "dropdown", options: [
-          { value: "text", label: "Texte « Heures creuses / pleines » (ou « Jour Bleu · HC ») sur le cadran" }, { value: "color", label: "Fond du disque vert / orange (ou couleur Tempo)" },
-          { value: "both", label: "Texte et fond" }, { value: "none", label: "Aucun" }] } } },
-        { name: "hc_pages", selector: { select: { mode: "dropdown", options: [{ value: "power", label: "La page puissance" }, { value: "all", label: "Toutes les pages" }] } } },
+          { value: "text", label: L("o_text") }, { value: "color", label: L("o_color") },
+          { value: "both", label: L("o_both") }, { value: "none", label: L("o_none") }] } } },
+        { name: "hc_pages", selector: { select: { mode: "dropdown", options: [{ value: "power", label: L("o_pg_power") }, { value: "all", label: L("o_pg_all") }] } } },
         { name: "hc_source", selector: { entity: {} } },
         { name: "hc_values", selector: { text: {} } },
       ] },
-      { type: "expandable", title: "Cadran et affichage", icon: "mdi:gauge", flatten: true, schema: [
+      { type: "expandable", title: L("s_dial"), icon: "mdi:gauge", flatten: true, schema: [
         { type: "grid", name: "", schema: [
           { name: "max_power", selector: { number: { min: 100, max: 50000, step: 100, mode: "box", unit_of_measurement: "W" } } },
           { name: "rotate_seconds", selector: { number: { min: 0, max: 120, step: 1, mode: "box", unit_of_measurement: "s" } } },
@@ -562,13 +698,14 @@ class HolmEcojokoCardEditor extends HTMLElement {
         { name: "size", selector: { number: { min: 0, max: 1200, step: 10, mode: "box", unit_of_measurement: "px" } } },
         { name: "show_frame", selector: { boolean: {} } },
       ] },
-      { type: "expandable", title: "Couleurs", icon: "mdi:palette", flatten: true, schema: [
+      { type: "expandable", title: L("s_colors"), icon: "mdi:palette", flatten: true, schema: [
         { type: "grid", name: "", schema: colorKeys.map((k) => ({ name: "c_" + k, selector: { color_rgb: {} } })) },
       ] },
+      { name: "language", selector: { select: { mode: "dropdown", options: [{ value: "", label: L("auto") }, ...Object.entries(LANG_NAMES).map(([value, label]) => ({ value, label }))] } } },
     ];
   }
   _data() {
-    const c = this._config || {}, d = { title_position: "top", mode: "conso", tariff: "hchp", rotate_seconds: 10, size: 0, show_frame: true, energy_counter: "auto", hc_display: "text", hc_pages: "power", ...c };
+    const c = this._config || {}, d = { language: "", title_position: "top", mode: "conso", tariff: "hchp", rotate_seconds: 10, size: 0, show_frame: true, energy_counter: "auto", hc_display: "text", hc_pages: "power", ...c };
     d.scale = Array.isArray(c.scale) ? c.scale.join(", ") : c.scale || "";
     for (const [k, v] of Object.entries(c.colors || {})) d["c_" + k] = hex2rgb(v);
     delete d.colors;
@@ -578,7 +715,7 @@ class HolmEcojokoCardEditor extends HTMLElement {
     if (!this._hass || !this._config) return;
     if (!this._form) {
       this._form = document.createElement("ha-form");
-      this._form.computeLabel = (sc) => LABELS[sc.name] || sc.name;
+      this._form.computeLabel = (sc) => labelOf(langOf(this._hass, this._config), sc.name);
       this._form.addEventListener("value-changed", (ev) => {
         const v = { ...ev.detail.value };
         const out = { ...this._config };
@@ -612,7 +749,7 @@ if (!customElements.get("holm-ecojoko-card-editor")) customElements.define("holm
 
 if (!customElements.get("holm-ecojoko-card")) customElements.define("holm-ecojoko-card", HolmEcojokoCard);
 window.customCards = window.customCards || [];
-window.customCards.push({ type: "holm-ecojoko-card", name: "HOLM – Cadran Ecojoko", description: "Cadran consommation / production solaire façon Ecojoko, adapté au thème", preview: true });
+{ const l = langOf(document.querySelector("home-assistant")?.hass); window.customCards.push({ type: "holm-ecojoko-card", name: tr(l, "card_name"), description: tr(l, "card_desc"), preview: true }); }
 })();
 
-console.info("%c HOLM-ECOJOKO %c 1.3.0 ", "background:#1f6aa8;color:#111;border-radius:3px 0 0 3px", "background:#123;color:#fff;border-radius:0 3px 3px 0");
+console.info("%c HOLM-ECOJOKO %c 1.4.0 ", "background:#1f6aa8;color:#111;border-radius:3px 0 0 3px", "background:#123;color:#fff;border-radius:0 3px 3px 0");

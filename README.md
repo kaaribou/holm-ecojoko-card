@@ -4,6 +4,8 @@
 ![Version](https://img.shields.io/github/v/release/kaaribou/holm-ecojoko-card)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.1%2B-03a9f4)
 
+🇫🇷 Français · [🇬🇧 English](README.en.md)
+
 **Le célèbre cadran de consommation, dans Home Assistant : la puissance en direct, le coût du jour, la semaine, et si vous consommez plus ou moins que d'habitude.**
 
 HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puissance à échelle logarithmique, un disque central qui fait défiler plusieurs informations, et une petite jauge qui indique si **aujourd'hui vous consommez plus ou moins que d'habitude**. Elle fonctionne avec n'importe quel compteur (Ecojoko, Linky, pince ampèremétrique…) et a aussi un **mode production solaire**.
@@ -23,6 +25,10 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 - 🔄 Défilement automatique des informations (ou manuel), couleurs personnalisables, taille réglable.
 
 ![Consommation, semaine et mode solaire](docs/images/cadrans.png)
+
+### 🆕 Nouveautés de la 1.4.0
+
+- 🌍 **La carte parle 8 langues** : français, anglais, allemand, espagnol, italien, néerlandais, portugais et polonais, éditeur compris. Elle suit la langue de votre profil Home Assistant (anglais si votre langue n'est pas traduite) ; l'option `language` permet d'en imposer une. Nombres et dates suivent aussi la langue.
 
 **Heures creuses / heures pleines** : texte seul, texte et fond en heures creuses, texte et fond en heures pleines
 
@@ -91,6 +97,7 @@ price_export: 0.04                        # prix de revente
 | Option | Description | Par défaut |
 |---|---|---|
 | `mode` | `conso` (consommation) ou `solar` (production) | `conso` |
+| `language` | Langue de la carte : `fr`, `en`, `de`, `es`, `it`, `nl`, `pt`, `pl` | celle du profil |
 | `power` | Puissance en temps réel, en W (**obligatoire**) | — |
 | `energy_hc` / `energy_hp` | Énergie consommée en heures creuses / pleines (kWh ou Wh) : compteur du jour ou index cumulé | — |
 | `hc_display` | Indicateur heures creuses / pleines : `text` (texte sur le cadran), `color` (disque vert / orange), `both`, `none` | `text` |

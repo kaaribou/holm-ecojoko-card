@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0
+- **8 langues** : français, anglais, allemand, espagnol, italien, néerlandais, portugais et polonais, pour le cadran et l'éditeur visuel. La carte suit la langue du profil Home Assistant (anglais si la langue n'est pas traduite) ; nouvelle option `language`, aussi réglable dans l'éditeur. Les nombres et les dates suivent la langue.
+- README en anglais (`README.en.md`).
+
 ## 1.3.0
 - **Option Tempo (EDF)** ([#3](https://github.com/kaaribou/holm-ecojoko-card/issues/3)) : option tarifaire **Tempo** (`tariff: tempo`) avec les 6 index (Bleu, Blanc, Rouge × HC / HP) et leurs 6 prix (nombres ou entités).
   - « Jour Bleu · HC » sur le cadran et/ou disque aux couleurs du jour (`hc_display`), couleur de demain sur la page puissance.
