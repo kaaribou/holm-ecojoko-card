@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0
+- **Option Base (prix unique)** ([#4](https://github.com/kaaribou/holm-ecojoko-card/issues/4)) : option tarifaire **Base** (`tariff: base`) avec un seul compteur (`energy_base`, compteur du jour ou index cumulé) et un seul prix (`price_base`, nombre ou entité).
+  - Pas d'indicateur heures creuses / pleines ; page Aujourd'hui : coût et kWh sans ligne HC / HP ni part des heures creuses ; semaine : coût total, barres d'une seule couleur.
+  - Choix « Base (prix unique) » dans l'éditeur visuel, traduit dans les 8 langues.
+- **Prix repris de HOLM HP/HC** : un prix laissé vide dans la carte est pris dans l'intégration [HOLM HP/HC](https://github.com/kaaribou/holm-tarif) (`number.tarif_prix_hc` / `_hp` / `_base`, les 6 prix Tempo, et `number.tarif_prix_rachat` pour la revente en mode solaire). Mention « vide : HOLM HP/HC » sur les champs de prix de l'éditeur quand l'intégration est installée.
+- Sans changement de configuration, la carte est inchangée.
+
 ## 1.4.0
 - **8 langues** : français, anglais, allemand, espagnol, italien, néerlandais, portugais et polonais, pour le cadran et l'éditeur visuel. La carte suit la langue du profil Home Assistant (anglais si la langue n'est pas traduite) ; nouvelle option `language`, aussi réglable dans l'éditeur. Les nombres et les dates suivent la langue.
 - README en anglais (`README.en.md`).

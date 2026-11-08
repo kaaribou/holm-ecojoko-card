@@ -1,4 +1,4 @@
-/* holm-ecojoko-card — https://github.com/kaaribou/holm-ecojoko-card — licence MIT — v1.4.0 */
+/* holm-ecojoko-card — https://github.com/kaaribou/holm-ecojoko-card — licence MIT — v1.5.0 */
 // holm-ecojoko-card — cadran façon Ecojoko, adapté au thème (aucun helper)
 // type: custom:holm-ecojoko-card
 // power: sensor.ecojoko_consommation_temps_reel      (W, temps réel)
@@ -8,7 +8,7 @@
 // hc_display: text | color | both | none  (indicateur heures creuses / pleines), hc_source: binary_sensor.heures_creuses (auto si absent)   (compteurs remis à zéro chaque jour, ou index cumulés type Linky)
 // price_hc: input_number.hc_heures_creuses            (€/kWh)  — ou nombre
 // price_hp: input_number.heures_pleines
-// tariff: hchp | tempo   — Tempo : energy_bleu_hc … energy_rouge_hp, price_bleu_hc … price_rouge_hp,
+// tariff: hchp | tempo | base   — Base (prix unique) : energy_base, price_base ; Tempo : energy_bleu_hc … energy_rouge_hp, price_bleu_hc … price_rouge_hp,
 //          tempo_color / tempo_color_tomorrow (auto : intégration RTE Tempo, HOLM HP/HC…)
 // solar_power: sensor.ecu_current_power               (optionnel)
 // solar_energy: sensor.ecu_today_energy               (optionnel)
@@ -31,7 +31,7 @@ const I18N = {
     l_energy_tempo: "Énergie {c} {p} (kWh)", l_price_tempo: "Prix {c} {p} (€/kWh)", l_tempo_color: "Couleur du jour (automatique si vide : RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Couleur de demain (automatique si vide)",
     l_c_tempo: "Couleur — jour {c}", l_c_hc: "Couleur — heures creuses", l_c_hp: "Couleur — heures pleines", l_c_power: "Couleur — temps réel", l_c_today: "Couleur — aujourd'hui", l_c_week: "Couleur — 7 jours", l_c_solar: "Couleur — solaire", l_c_self: "Couleur — autoconsommation",
     l_language: "Langue", auto: "Automatique (profil)",
-    o_hchp: "Heures creuses / heures pleines", o_tempo: "Tempo (EDF)", o_top: "En haut", o_bottom: "En bas", o_conso: "Consommation", o_solar: "Production solaire",
+    o_hchp: "Heures creuses / heures pleines", o_tempo: "Tempo (EDF)", o_base: "Base (prix unique)", l_energy_base: "Énergie consommée (kWh)", l_price_base: "Prix du kWh (€/kWh)", auto_tarif: "vide : HOLM HP/HC", o_top: "En haut", o_bottom: "En bas", o_conso: "Consommation", o_solar: "Production solaire",
     o_auto: "Automatique", o_daily: "Remis à zéro chaque jour (Ecojoko…)", o_total: "Index cumulé (Linky, ZLinky…)",
     o_text: "Texte « Heures creuses / pleines » (ou « Jour Bleu · HC ») sur le cadran", o_color: "Fond du disque vert / orange (ou couleur Tempo)", o_both: "Texte et fond", o_none: "Aucun", o_pg_power: "La page puissance", o_pg_all: "Toutes les pages",
     s_entities: "Entités", s_hc: "Heures creuses / pleines et Tempo", s_dial: "Cadran et affichage", s_colors: "Couleurs",
@@ -48,7 +48,7 @@ const I18N = {
     l_energy_tempo: "{c} {p} energy (kWh)", l_price_tempo: "{c} {p} price (€/kWh)", l_tempo_color: "Today's colour (automatic if empty: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Tomorrow's colour (automatic if empty)",
     l_c_tempo: "Colour — {c} day", l_c_hc: "Colour — off-peak hours", l_c_hp: "Colour — peak hours", l_c_power: "Colour — real time", l_c_today: "Colour — today", l_c_week: "Colour — 7 days", l_c_solar: "Colour — solar", l_c_self: "Colour — self-consumption",
     l_language: "Language", auto: "Automatic (profile)",
-    o_hchp: "Off-peak / peak hours", o_tempo: "Tempo (EDF)", o_top: "Top", o_bottom: "Bottom", o_conso: "Consumption", o_solar: "Solar production",
+    o_hchp: "Off-peak / peak hours", o_tempo: "Tempo (EDF)", o_base: "Base (single price)", l_energy_base: "Energy used (kWh)", l_price_base: "Price per kWh (€/kWh)", auto_tarif: "empty: HOLM HP/HC", o_top: "Top", o_bottom: "Bottom", o_conso: "Consumption", o_solar: "Solar production",
     o_auto: "Automatic", o_daily: "Reset every day (Ecojoko…)", o_total: "Cumulative index (Linky, ZLinky…)",
     o_text: "“Off-peak / Peak hours” text (or “Blue day · Off-peak”) on the dial", o_color: "Green / orange disc background (or Tempo colour)", o_both: "Text and background", o_none: "None", o_pg_power: "The power page", o_pg_all: "All pages",
     s_entities: "Entities", s_hc: "Off-peak / peak hours and Tempo", s_dial: "Dial and display", s_colors: "Colours",
@@ -65,7 +65,7 @@ const I18N = {
     l_energy_tempo: "Energie {c} {p} (kWh)", l_price_tempo: "Preis {c} {p} (€/kWh)", l_tempo_color: "Farbe von heute (automatisch wenn leer: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Farbe von morgen (automatisch wenn leer)",
     l_c_tempo: "Farbe — {c}er Tag", l_c_hc: "Farbe — Niedertarif", l_c_hp: "Farbe — Hochtarif", l_c_power: "Farbe — Echtzeit", l_c_today: "Farbe — heute", l_c_week: "Farbe — 7 Tage", l_c_solar: "Farbe — Solar", l_c_self: "Farbe — Eigenverbrauch",
     l_language: "Sprache", auto: "Automatisch (Profil)",
-    o_hchp: "Niedertarif / Hochtarif", o_tempo: "Tempo (EDF)", o_top: "Oben", o_bottom: "Unten", o_conso: "Verbrauch", o_solar: "Solarerzeugung",
+    o_hchp: "Niedertarif / Hochtarif", o_tempo: "Tempo (EDF)", o_base: "Base (Einheitspreis)", l_energy_base: "Verbrauchte Energie (kWh)", l_price_base: "Preis pro kWh (€/kWh)", auto_tarif: "leer: HOLM HP/HC", o_top: "Oben", o_bottom: "Unten", o_conso: "Verbrauch", o_solar: "Solarerzeugung",
     o_auto: "Automatisch", o_daily: "Täglich zurückgesetzt (Ecojoko…)", o_total: "Kumulierter Zählerstand (Linky, ZLinky…)",
     o_text: "Text „Niedertarif / Hochtarif“ (oder „Blauer Tag · NT“) auf der Anzeige", o_color: "Grüner / oranger Hintergrund (oder Tempo-Farbe)", o_both: "Text und Hintergrund", o_none: "Keine", o_pg_power: "Die Leistungsseite", o_pg_all: "Alle Seiten",
     s_entities: "Entitäten", s_hc: "Niedertarif / Hochtarif und Tempo", s_dial: "Anzeige und Darstellung", s_colors: "Farben",
@@ -82,7 +82,7 @@ const I18N = {
     l_energy_tempo: "Energía {c} {p} (kWh)", l_price_tempo: "Precio {c} {p} (€/kWh)", l_tempo_color: "Color del día (automático si está vacío: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Color de mañana (automático si está vacío)",
     l_c_tempo: "Color — día {c}", l_c_hc: "Color — horas valle", l_c_hp: "Color — horas punta", l_c_power: "Color — tiempo real", l_c_today: "Color — hoy", l_c_week: "Color — 7 días", l_c_solar: "Color — solar", l_c_self: "Color — autoconsumo",
     l_language: "Idioma", auto: "Automático (perfil)",
-    o_hchp: "Horas valle / horas punta", o_tempo: "Tempo (EDF)", o_top: "Arriba", o_bottom: "Abajo", o_conso: "Consumo", o_solar: "Producción solar",
+    o_hchp: "Horas valle / horas punta", o_tempo: "Tempo (EDF)", o_base: "Base (precio único)", l_energy_base: "Energía consumida (kWh)", l_price_base: "Precio del kWh (€/kWh)", auto_tarif: "vacío: HOLM HP/HC", o_top: "Arriba", o_bottom: "Abajo", o_conso: "Consumo", o_solar: "Producción solar",
     o_auto: "Automático", o_daily: "Se reinicia cada día (Ecojoko…)", o_total: "Índice acumulado (Linky, ZLinky…)",
     o_text: "Texto «Horas valle / punta» (o «Día Azul · Valle») en la esfera", o_color: "Fondo del disco verde / naranja (o color Tempo)", o_both: "Texto y fondo", o_none: "Ninguno", o_pg_power: "La página de potencia", o_pg_all: "Todas las páginas",
     s_entities: "Entidades", s_hc: "Horas valle / punta y Tempo", s_dial: "Esfera y visualización", s_colors: "Colores",
@@ -99,7 +99,7 @@ const I18N = {
     l_energy_tempo: "Energia {c} {p} (kWh)", l_price_tempo: "Prezzo {c} {p} (€/kWh)", l_tempo_color: "Colore di oggi (automatico se vuoto: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Colore di domani (automatico se vuoto)",
     l_c_tempo: "Colore — giorno {c}", l_c_hc: "Colore — fuori punta", l_c_hp: "Colore — ore di punta", l_c_power: "Colore — tempo reale", l_c_today: "Colore — oggi", l_c_week: "Colore — 7 giorni", l_c_solar: "Colore — solare", l_c_self: "Colore — autoconsumo",
     l_language: "Lingua", auto: "Automatica (profilo)",
-    o_hchp: "Fuori punta / ore di punta", o_tempo: "Tempo (EDF)", o_top: "In alto", o_bottom: "In basso", o_conso: "Consumo", o_solar: "Produzione solare",
+    o_hchp: "Fuori punta / ore di punta", o_tempo: "Tempo (EDF)", o_base: "Base (prezzo unico)", l_energy_base: "Energia consumata (kWh)", l_price_base: "Prezzo del kWh (€/kWh)", auto_tarif: "vuoto: HOLM HP/HC", o_top: "In alto", o_bottom: "In basso", o_conso: "Consumo", o_solar: "Produzione solare",
     o_auto: "Automatico", o_daily: "Azzerato ogni giorno (Ecojoko…)", o_total: "Indice cumulato (Linky, ZLinky…)",
     o_text: "Testo «Fuori punta / Ore di punta» (o «Giorno Blu · F. punta») sul quadrante", o_color: "Sfondo del disco verde / arancione (o colore Tempo)", o_both: "Testo e sfondo", o_none: "Nessuno", o_pg_power: "La pagina potenza", o_pg_all: "Tutte le pagine",
     s_entities: "Entità", s_hc: "Fuori punta / punta e Tempo", s_dial: "Quadrante e visualizzazione", s_colors: "Colori",
@@ -116,7 +116,7 @@ const I18N = {
     l_energy_tempo: "Energie {c} {p} (kWh)", l_price_tempo: "Prijs {c} {p} (€/kWh)", l_tempo_color: "Kleur van vandaag (automatisch indien leeg: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Kleur van morgen (automatisch indien leeg)",
     l_c_tempo: "Kleur — dag {c}", l_c_hc: "Kleur — daltarief", l_c_hp: "Kleur — piektarief", l_c_power: "Kleur — realtime", l_c_today: "Kleur — vandaag", l_c_week: "Kleur — 7 dagen", l_c_solar: "Kleur — zon", l_c_self: "Kleur — eigen verbruik",
     l_language: "Taal", auto: "Automatisch (profiel)",
-    o_hchp: "Dal- / piekuren", o_tempo: "Tempo (EDF)", o_top: "Boven", o_bottom: "Onder", o_conso: "Verbruik", o_solar: "Zonne-opwekking",
+    o_hchp: "Dal- / piekuren", o_tempo: "Tempo (EDF)", o_base: "Base (enkel tarief)", l_energy_base: "Verbruikte energie (kWh)", l_price_base: "Prijs per kWh (€/kWh)", auto_tarif: "leeg: HOLM HP/HC", o_top: "Boven", o_bottom: "Onder", o_conso: "Verbruik", o_solar: "Zonne-opwekking",
     o_auto: "Automatisch", o_daily: "Elke dag op nul gezet (Ecojoko…)", o_total: "Cumulatieve meterstand (Linky, ZLinky…)",
     o_text: "Tekst ‘Daltarief / Piektarief’ (of ‘Blauwe dag · Dal’) op de meter", o_color: "Groene / oranje achtergrond (of Tempo-kleur)", o_both: "Tekst en achtergrond", o_none: "Geen", o_pg_power: "De vermogenspagina", o_pg_all: "Alle pagina's",
     s_entities: "Entiteiten", s_hc: "Dal- / piekuren en Tempo", s_dial: "Meter en weergave", s_colors: "Kleuren",
@@ -133,7 +133,7 @@ const I18N = {
     l_energy_tempo: "Energia {c} {p} (kWh)", l_price_tempo: "Preço {c} {p} (€/kWh)", l_tempo_color: "Cor do dia (automática se vazia: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Cor de amanhã (automática se vazia)",
     l_c_tempo: "Cor — dia {c}", l_c_hc: "Cor — horas de vazio", l_c_hp: "Cor — horas cheias", l_c_power: "Cor — tempo real", l_c_today: "Cor — hoje", l_c_week: "Cor — 7 dias", l_c_solar: "Cor — solar", l_c_self: "Cor — autoconsumo",
     l_language: "Idioma", auto: "Automático (perfil)",
-    o_hchp: "Horas de vazio / cheias", o_tempo: "Tempo (EDF)", o_top: "Em cima", o_bottom: "Em baixo", o_conso: "Consumo", o_solar: "Produção solar",
+    o_hchp: "Horas de vazio / cheias", o_tempo: "Tempo (EDF)", o_base: "Base (preço único)", l_energy_base: "Energia consumida (kWh)", l_price_base: "Preço do kWh (€/kWh)", auto_tarif: "vazio: HOLM HP/HC", o_top: "Em cima", o_bottom: "Em baixo", o_conso: "Consumo", o_solar: "Produção solar",
     o_auto: "Automático", o_daily: "Reposto a zero todos os dias (Ecojoko…)", o_total: "Índice acumulado (Linky, ZLinky…)",
     o_text: "Texto «Horas de vazio / cheias» (ou «Dia Azul · Vazio») no mostrador", o_color: "Fundo do disco verde / laranja (ou cor Tempo)", o_both: "Texto e fundo", o_none: "Nenhum", o_pg_power: "A página de potência", o_pg_all: "Todas as páginas",
     s_entities: "Entidades", s_hc: "Horas de vazio / cheias e Tempo", s_dial: "Mostrador e apresentação", s_colors: "Cores",
@@ -150,7 +150,7 @@ const I18N = {
     l_energy_tempo: "Energia {c} {p} (kWh)", l_price_tempo: "Cena {c} {p} (€/kWh)", l_tempo_color: "Kolor dnia (automatycznie, jeśli puste: RTE Tempo, HOLM HP/HC…)", l_tempo_color_tomorrow: "Kolor jutra (automatycznie, jeśli puste)",
     l_c_tempo: "Kolor — dzień {c}", l_c_hc: "Kolor — poza szczytem", l_c_hp: "Kolor — szczyt", l_c_power: "Kolor — na żywo", l_c_today: "Kolor — dziś", l_c_week: "Kolor — 7 dni", l_c_solar: "Kolor — PV", l_c_self: "Kolor — autokonsumpcja",
     l_language: "Język", auto: "Automatycznie (profil)",
-    o_hchp: "Strefa pozaszczytowa / szczytowa", o_tempo: "Tempo (EDF)", o_top: "Na górze", o_bottom: "Na dole", o_conso: "Zużycie", o_solar: "Produkcja PV",
+    o_hchp: "Strefa pozaszczytowa / szczytowa", o_tempo: "Tempo (EDF)", o_base: "Base (jedna cena)", l_energy_base: "Zużyta energia (kWh)", l_price_base: "Cena za kWh (€/kWh)", auto_tarif: "puste: HOLM HP/HC", o_top: "Na górze", o_bottom: "Na dole", o_conso: "Zużycie", o_solar: "Produkcja PV",
     o_auto: "Automatycznie", o_daily: "Zerowany codziennie (Ecojoko…)", o_total: "Narastający stan licznika (Linky, ZLinky…)",
     o_text: "Tekst „Poza szczytem / Szczyt” (lub „Dzień niebieski · Poza szczytem”) na tarczy", o_color: "Zielone / pomarańczowe tło (lub kolor Tempo)", o_both: "Tekst i tło", o_none: "Brak", o_pg_power: "Strona mocy", o_pg_all: "Wszystkie strony",
     s_entities: "Encje", s_hc: "Strefy taryfowe i Tempo", s_dial: "Tarcza i wyświetlanie", s_colors: "Kolory",
@@ -185,6 +185,7 @@ class HolmEcojokoCard extends HTMLElement {
     };
     this._c.colors = { power: "#1f6aa8", today: "#0a8f95", week: "#43a867", solar: "#d99a1c", hc: "#2e9e5b", hp: "#e2702a", bleu: "#2f6fd6", blanc: "#8d99a8", rouge: "#d8433b", ...(c.colors || {}) };
     this._tempo = c.tariff === "tempo" && c.mode !== "solar";
+    this._single = c.tariff === "base" && c.mode !== "solar";      // option Base : un seul compteur, un seul prix
     this._c.hc_display = ["text", "color", "both", "none"].includes(c.hc_display) ? c.hc_display : "text";
     this._c.hc_pages = c.hc_pages === "all" ? "all" : "power";
     this._c.hc_values = String(c.hc_values || "on, HC, HC.., heures creuses").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
@@ -237,18 +238,33 @@ class HolmEcojokoCard extends HTMLElement {
     if (base !== undefined) return raw >= base - 0.001 && Math.abs(raw - base - (ts || 0)) <= Math.abs(raw - (ts || 0)) ? total : raw;
     return ts !== undefined && raw > ts * 3 + 5 ? ts : raw;
   }
-  // Compteurs d'énergie et leur prix : HC / HP, ou les 6 index Tempo
+  // Prix : celui de la carte, sinon celui de l'intégration HOLM HP/HC (entités number.tarif_…)
+  _tarifSensor() {
+    const h = this._hass; if (!h) return null;
+    if (this._tarifId === undefined || (this._tarifId && !h.states[this._tarifId]))
+      this._tarifId = Object.keys(h.states).find((e) => e.startsWith("sensor.") && h.states[e].attributes.reglages !== undefined && h.states[e].attributes.periode !== undefined) || null;
+    return this._tarifId ? h.states[this._tarifId] : null;
+  }
+  _price(key) {
+    if (this._c[key] !== undefined && this._c[key] !== null && this._c[key] !== "") return this._c[key];
+    const ts = this._tarifSensor(); if (!ts) return undefined;
+    const attr = key === "price_export" ? "prix_rachat" : key.replace(/^price_/, "prix_");
+    const id = (ts.attributes.reglages || {})[attr];
+    return id && this._hass.states[id] ? id : undefined;
+  }
+  // Compteurs d'énergie et leur prix : HC / HP, les 6 index Tempo, ou un seul compteur (Base)
   _counters() {
     const c = this._c;
+    if (this._single) return c.energy_base ? [{ id: c.energy_base, price: this._price("price_base"), hc: null, col: null }] : [];
     if (this._tempo) {
       const out = [];
       for (const col of TEMPO) for (const per of ["hc", "hp"]) {
         const id = c[`energy_${col}_${per}`];
-        if (id) out.push({ id, price: c[`price_${col}_${per}`], hc: per === "hc", col });
+        if (id) out.push({ id, price: this._price(`price_${col}_${per}`), hc: per === "hc", col });
       }
       return out;
     }
-    return [[c.energy_hc, c.price_hc, true], [c.energy_hp, c.price_hp, false]].filter(([id]) => id).map(([id, price, hc]) => ({ id, price, hc, col: null }));
+    return [[c.energy_hc, "price_hc", true], [c.energy_hp, "price_hp", false]].filter(([id]) => id).map(([id, pk, hc]) => ({ id, price: this._price(pk), hc, col: null }));
   }
   // Couleur Tempo du jour (ou de demain) : entité choisie, sinon détectée (RTE Tempo, HOLM HP/HC…), sinon compteur qui avance
   _tempoEntity(tomorrow) {
@@ -278,6 +294,7 @@ class HolmEcojokoCard extends HTMLElement {
     return this._hcAuto;
   }
   _isHC() {
+    if (this._single) return null;      // option Base : pas d'heures creuses
     const ent = this._hcEntity();
     if (ent) {
       const st = this._hass.states[ent];
@@ -340,7 +357,7 @@ class HolmEcojokoCard extends HTMLElement {
         ]);
         const byDay = {}, byHour = {};
         if (this._solar) {
-          const ps = this._num(c.price_self) || 0, pe = this._num(c.price_export) || 0;
+          const ps = this._num(c.price_self) || 0, pe = this._num(this._price("price_export")) || 0;
           for (const s of days[c.energy] || []) { const k = new Date(s.start).toDateString(); byDay[k] = byDay[k] || { kwh: 0, exp: 0, t: s.start }; byDay[k].kwh += s.change || 0; }
           for (const s of days[c.export_energy] || []) { const k = new Date(s.start).toDateString(); if (byDay[k]) byDay[k].exp += s.change || 0; }
           for (const v of Object.values(byDay)) { const exp = Math.min(v.exp, v.kwh); v.eur = (v.kwh - exp) * ps + exp * pe; }
@@ -458,7 +475,7 @@ class HolmEcojokoCard extends HTMLElement {
     const kwhToday = kHC + kHP, nCnt = this._solar ? 0 : this._counters().length;
     if (this._solar) {
       const prod = this._day(c.energy) || 0, exp = Math.min(this._day(c.export_energy) || 0, prod);
-      const selfK = prod - exp, ps = this._num(c.price_self) || 0, pe = this._num(c.price_export) || 0;
+      const selfK = prod - exp, ps = this._num(c.price_self) || 0, pe = this._num(this._price("price_export")) || 0;
       if (s === "power") {
         color = col.power;
         const sp = this._spark.filter((x) => x.t > Date.now() - 3600000);
@@ -509,7 +526,7 @@ class HolmEcojokoCard extends HTMLElement {
       color = col.today;
       const tDay = this._tempo ? this._tempoColor(false) : null;
       body = `<div class="big">${fmtNum(eurToday, 2)} €</div><div class="mid">${fmtNum(kwhToday, 1)} kWh</div>
-        <div class="split"><span>${this._t("hc")} ${fmtNum(kHC, 1)}${nCnt >= 2 && kwhToday > 0 ? ` · ${fmtNum((kHC / kwhToday) * 100)} %` : ""}</span><span>${this._t("hp")} ${fmtNum(kHP, 1)}</span></div>
+        ${this._single ? "" : `<div class="split"><span>${this._t("hc")} ${fmtNum(kHC, 1)}${nCnt >= 2 && kwhToday > 0 ? ` · ${fmtNum((kHC / kwhToday) * 100)} %` : ""}</span><span>${this._t("hp")} ${fmtNum(kHP, 1)}</span></div>`}
         <div class="t2">${this._t("today")}${tDay ? ` · ${this._t(tDay)}` : ""}</div>`;
     } else if (s === "week") {
       color = col.week;
@@ -639,7 +656,7 @@ const rgb2hex = (a) => Array.isArray(a) ? "#" + a.map((v) => Number(v).toString(
 class HolmEcojokoCardEditor extends HTMLElement {
   setConfig(c) { this._config = { ...c }; this._update(); }
   set hass(h) { this._hass = h; this._update(); }
-  _schema(solar, tempo) {
+  _schema(solar, tempo, single) {
     const l = langOf(this._hass, this._config), L = (k) => tr(l, k);
     const colorKeys = solar ? ["power", "today", "week", "self", "hc", "hp"] : ["power", "today", "week", "solar", "hc", "hp", ...(tempo ? ["bleu", "blanc", "rouge"] : [])];
     const priceSel = ent(["sensor", "input_number", "number"]);
@@ -649,6 +666,9 @@ class HolmEcojokoCardEditor extends HTMLElement {
         { name: `price_${col}_hc`, selector: priceSel }, { name: `price_${col}_hp`, selector: priceSel }] }]),
       { name: "tempo_color", selector: ent(["sensor", "select", "input_select"]) },
       { name: "tempo_color_tomorrow", selector: ent(["sensor", "select", "input_select"]) },
+    ] : single ? [
+      { name: "energy_base", selector: ent(["sensor"]) },
+      { name: "price_base", selector: priceSel },
     ] : [
       { name: "energy_hc", selector: ent(["sensor"]) },
       { name: "energy_hp", selector: ent(["sensor"]) },
@@ -664,7 +684,7 @@ class HolmEcojokoCardEditor extends HTMLElement {
       { name: "forecast", selector: ent(["sensor"]) },
     ] : [
       { name: "power", required: true, selector: ent(["sensor"]) },
-      { name: "tariff", selector: { select: { mode: "dropdown", options: [{ value: "hchp", label: L("o_hchp") }, { value: "tempo", label: L("o_tempo") }] } } },
+      { name: "tariff", selector: { select: { mode: "dropdown", options: [{ value: "hchp", label: L("o_hchp") }, { value: "tempo", label: L("o_tempo") }, { value: "base", label: L("o_base") }] } } },
       ...tariffEnt,
       { name: "solar_power", selector: ent(["sensor"]) },
       { name: "solar_energy", selector: ent(["sensor"]) },
@@ -715,7 +735,12 @@ class HolmEcojokoCardEditor extends HTMLElement {
     if (!this._hass || !this._config) return;
     if (!this._form) {
       this._form = document.createElement("ha-form");
-      this._form.computeLabel = (sc) => labelOf(langOf(this._hass, this._config), sc.name);
+      this._form.computeLabel = (sc) => {
+        const l = langOf(this._hass, this._config), lab = labelOf(l, sc.name);
+        // prix laissé vide : repris de l'intégration HOLM HP/HC si elle est installée
+        const tarif = /^price_(hc|hp|base|export|(bleu|blanc|rouge)_(hc|hp))$/.test(sc.name) && Object.values(this._hass.states).some((st) => st.entity_id.startsWith("sensor.") && st.attributes.reglages !== undefined && st.attributes.periode !== undefined);
+        return tarif ? `${lab} — ${tr(l, "auto_tarif")}` : lab;
+      };
       this._form.addEventListener("value-changed", (ev) => {
         const v = { ...ev.detail.value };
         const out = { ...this._config };
@@ -742,7 +767,7 @@ class HolmEcojokoCardEditor extends HTMLElement {
     }
     this._form.hass = this._hass;
     this._form.data = this._data();
-    this._form.schema = this._schema(this._config.mode === "solar", this._config.tariff === "tempo");
+    this._form.schema = this._schema(this._config.mode === "solar", this._config.tariff === "tempo", this._config.tariff === "base");
   }
 }
 if (!customElements.get("holm-ecojoko-card-editor")) customElements.define("holm-ecojoko-card-editor", HolmEcojokoCardEditor);
@@ -752,4 +777,4 @@ window.customCards = window.customCards || [];
 { const l = langOf(document.querySelector("home-assistant")?.hass); window.customCards.push({ type: "holm-ecojoko-card", name: tr(l, "card_name"), description: tr(l, "card_desc"), preview: true }); }
 })();
 
-console.info("%c HOLM-ECOJOKO %c 1.4.0 ", "background:#1f6aa8;color:#111;border-radius:3px 0 0 3px", "background:#123;color:#fff;border-radius:0 3px 3px 0");
+console.info("%c HOLM-ECOJOKO %c 1.5.0 ", "background:#1f6aa8;color:#111;border-radius:3px 0 0 3px", "background:#123;color:#fff;border-radius:0 3px 3px 0");

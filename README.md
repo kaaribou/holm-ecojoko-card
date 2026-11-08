@@ -17,6 +17,8 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 - 🎯 **Puissance en temps réel** sur une jauge 0 → 10 kW (échelle réglable), avec la courbe de la dernière heure.
 - 💶 **Aujourd'hui** : kWh et coût, avec vos prix heures creuses / heures pleines (nombres ou entités), et la part des heures creuses.
 - 🌗 **Heures creuses / heures pleines** : « Heures creuses » ou « Heures pleines » sur le cadran, et/ou disque vert / orange — automatique avec [HOLM HP/HC](https://github.com/kaaribou/holm-tarif), ou d'après le compteur HC / HP qui avance.
+- 💡 **Option Base (prix unique)** : un seul compteur et un seul prix, sans heures creuses — pour l'option Base d'EDF ou toute offre à prix fixe.
+- 🔗 **Prix repris de [HOLM HP/HC](https://github.com/kaaribou/holm-tarif)** : laissez les prix vides, la carte utilise ceux de l'intégration (HC / HP, Tempo, Base, rachat du surplus).
 - 🔵⚪🔴 **Option Tempo (EDF)** : les 6 index (Bleu, Blanc, Rouge × HC / HP) et leurs prix, « Jour Bleu · HC » sur le cadran, disque aux couleurs du jour, couleur de demain, et barres de la semaine colorées selon le jour.
 - 🔢 **Tous les compteurs** : capteurs remis à zéro chaque jour (Ecojoko…) ou **index cumulés** (Linky, ZLinky…), reconnus automatiquement — sans sous-compteur journalier.
 - 📊 **Sur 7 jours** : coût, kWh et barres par jour.
@@ -26,9 +28,15 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 
 ![Consommation, semaine et mode solaire](docs/images/cadrans.png)
 
-### 🆕 Nouveautés de la 1.4.0
+### 🆕 Nouveautés de la 1.5.0
 
-- 🌍 **La carte parle 8 langues** : français, anglais, allemand, espagnol, italien, néerlandais, portugais et polonais, éditeur compris. Elle suit la langue de votre profil Home Assistant (anglais si votre langue n'est pas traduite) ; l'option `language` permet d'en imposer une. Nombres et dates suivent aussi la langue.
+- 💡 **Option Base (prix unique)** ([#4](https://github.com/kaaribou/holm-ecojoko-card/issues/4)) : **Option tarifaire → Base** dans l'éditeur, puis un seul compteur (`energy_base`) et un seul prix (`price_base`). Pas d'indicateur heures creuses / pleines ni de « part des heures creuses » : la page Aujourd'hui affiche simplement le coût et les kWh, la semaine le coût total.
+- 🔗 **Prix repris de HOLM HP/HC** : si un prix n'est pas renseigné dans la carte, elle prend celui de l'intégration [HOLM HP/HC](https://github.com/kaaribou/holm-tarif) (`number.tarif_prix_hc`, `…_hp`, `…_base`, les 6 prix Tempo, et le prix de rachat en mode solaire). Un prix modifié dans l'intégration est pris en compte partout. Dans l'éditeur, les champs de prix l'indiquent (« vide : HOLM HP/HC »).
+- Sans changement de votre configuration, la carte reste identique.
+
+**Option Base** : puissance en temps réel, coût du jour, semaine
+
+![Option Base](docs/images/base.png)
 
 **Heures creuses / heures pleines** : texte seul, texte et fond en heures creuses, texte et fond en heures pleines
 
@@ -80,6 +88,16 @@ price_hc: 0.2068
 price_hp: 0.27
 ```
 
+**Option Base (prix unique)** : un seul compteur — par exemple l'index `EAST` / `EASF01` d'un Linky ou d'un ZLinky en Base.
+
+```yaml
+type: custom:holm-ecojoko-card
+power: sensor.linky_sinsts
+tariff: base
+energy_base: sensor.lixee_easf01          # compteur du jour ou index cumulé
+price_base: 0.1952                        # facultatif avec HOLM HP/HC
+```
+
 **Mode production solaire :**
 
 ```yaml
@@ -105,10 +123,11 @@ price_export: 0.04                        # prix de revente
 | `hc_source` | Entité qui indique les heures creuses (ex. `binary_sensor.heures_creuses`, tarif en cours du Linky) | automatique |
 | `hc_values` | Valeurs de `hc_source` qui signifient « heures creuses » | `on, HC, HC.., heures creuses` |
 | `energy_counter` | `auto`, `daily` (remis à zéro chaque jour) ou `total` (index cumulé) | `auto` |
-| `price_hc` / `price_hp` | Prix du kWh HC / HP : nombre ou entité | — |
-| `tariff` | Option tarifaire : `hchp` (heures creuses / pleines) ou `tempo` | `hchp` |
+| `price_hc` / `price_hp` | Prix du kWh HC / HP : nombre ou entité | ceux de HOLM HP/HC |
+| `tariff` | Option tarifaire : `hchp` (heures creuses / pleines), `tempo` ou `base` (prix unique) | `hchp` |
+| `energy_base` / `price_base` | Base : le compteur d'énergie et le prix du kWh (nombre ou entité) | — / celui de HOLM HP/HC |
 | `energy_bleu_hc` … `energy_rouge_hp` | Tempo : les 6 index (`bleu`, `blanc`, `rouge` × `hc`, `hp`) | — |
-| `price_bleu_hc` … `price_rouge_hp` | Tempo : les 6 prix (nombre ou entité) | — |
+| `price_bleu_hc` … `price_rouge_hp` | Tempo : les 6 prix (nombre ou entité) | ceux de HOLM HP/HC |
 | `tempo_color` / `tempo_color_tomorrow` | Tempo : couleur du jour et de demain | automatique |
 | `solar_power` / `solar_energy` / `export_energy` | En mode conso : ajoute une page « solaire » | — |
 | `energy` / `price_self` / `price_export` / `forecast` | Mode solaire : production (kWh), valeurs du kWh, prévision | — |
@@ -159,11 +178,38 @@ hc_display: both
 
 > Les prix ci-dessus sont des exemples : reportez ceux de votre contrat.
 
+### Option Base (prix unique)
+
+Pour l'option **Base** d'EDF (ou toute offre où le kWh coûte le même prix à toute heure), choisissez **Option tarifaire → Base (prix unique)** dans l'éditeur, puis :
+
+- **Énergie consommée** (`energy_base`) : un compteur remis à zéro chaque jour ou un index cumulé (Linky / ZLinky : `EAST` ou `EASF01`), reconnu automatiquement comme pour HC / HP ;
+- **Prix du kWh** (`price_base`) : un nombre ou une entité ; vide, la carte prend celui de HOLM HP/HC.
+
+Ce qui change sur la carte :
+
+- pas de texte « Heures creuses / pleines » sous l'aiguille (le mot « watts » reste affiché) et le disque garde la couleur de chaque page, même si `hc_display` est réglé ;
+- page **Aujourd'hui** : le coût et les kWh du jour, sans la ligne HC / HP ni la part des heures creuses ;
+- page **7 jours** : le coût et les kWh de la semaine, barres d'une seule couleur ;
+- l'écart du jour, la page solaire et le mode production solaire fonctionnent comme d'habitude.
+
+### Prix repris de HOLM HP/HC
+
+Avec l'intégration [HOLM HP/HC, Tarification et abonnement](https://github.com/kaaribou/holm-tarif), inutile de saisir vos prix dans la carte : **laissez les champs de prix vides**. La carte trouve le capteur « Tarif actuel » de l'intégration et utilise ses entités de prix :
+
+| Prix de la carte | Entité de HOLM HP/HC |
+|---|---|
+| `price_hc` / `price_hp` | `number.tarif_prix_hc` / `number.tarif_prix_hp` |
+| `price_base` | `number.tarif_prix_base` (option Base de l'intégration) |
+| `price_bleu_hc` … `price_rouge_hp` | `number.tarif_prix_bleu_hc` … `number.tarif_prix_rouge_hp` (option Tempo) |
+| `price_export` (mode solaire) | `number.tarif_prix_rachat` |
+
+Un prix renseigné dans la carte reste prioritaire. Dans l'éditeur visuel, les champs de prix portent la mention « vide : HOLM HP/HC » quand l'intégration est installée.
+
 ## FAQ
 
 | Problème | Solution |
 |---|---|
-| Pas de coût | Indiquez `price_hc` / `price_hp` (ou `price_self` / `price_export` en solaire). |
+| Pas de coût | Indiquez `price_hc` / `price_hp` (`price_base` en Base, `price_self` / `price_export` en solaire), ou installez [HOLM HP/HC](https://github.com/kaaribou/holm-tarif) : ses prix sont repris automatiquement. |
 | « Aujourd'hui » affiche un total énorme | Vos capteurs sont des index cumulés : choisissez **Index cumulé** (`energy_counter: total`) si la détection automatique ne l'a pas reconnu. Les statistiques doivent être activées pour ces capteurs (`state_class: total_increasing`). |
 | Pas d'écart du jour | Il faut au moins une journée complète d'historique sur les 7 derniers jours. |
 | La nouvelle version ne s'affiche pas | Videz le cache (Ctrl + F5). |
@@ -186,4 +232,4 @@ Code : licence **MIT** — © kaaribou. Voir le [CHANGELOG](CHANGELOG.md).
 
 Fait partie de **HOLM — Home Orchestration & Living Management** : la gestion et l'orchestration intelligente de la maison.
 
-Les autres projets : [Volets HOLM](https://github.com/kaaribou/volets-holm) · [Climat HOLM](https://github.com/kaaribou/climat-holm) · [Carburant HOLM](https://github.com/kaaribou/carburant-holm) · [Commandes à la maison HOLM](https://github.com/kaaribou/commandes-holm) · [HOLM LaMetric](https://github.com/kaaribou/lametric-holm) · [HOLM My Menu](https://github.com/kaaribou/holm-mymenu) · [HOLM Lektrico](https://github.com/kaaribou/lektrico-holm) · [HOLM Navbar Card](https://github.com/kaaribou/holm-navbar-card) · [HOLM Climate Card](https://github.com/kaaribou/climate-card-holm) · [HOLM Music Card](https://github.com/kaaribou/holm-music-card) · [HOLM Sentinel Card](https://github.com/kaaribou/holm-sentinel-card) · [HOLM Security Card](https://github.com/kaaribou/holm-security-card) · [HOLM Recordings Card](https://github.com/kaaribou/holm-recordings-card) · [HOLM Covers Card](https://github.com/kaaribou/holm-covers-card) · [HOLM Runtime Card](https://github.com/kaaribou/holm-runtime-card) · [HOLM Power Flow Card](https://github.com/kaaribou/holm-power-flow-card) · [HOLM Energy Cards](https://github.com/kaaribou/holm-energy-cards) · [HOLM Radiator Card](https://github.com/kaaribou/holm-radiator-card) · [HOLM Floor Card](https://github.com/kaaribou/holm-floor-card) · [HOLM Smoke Card](https://github.com/kaaribou/holm-smoke-card) · [HOLM BG Card](https://github.com/kaaribou/holm-bg-card).
+Les autres projets : [Volets HOLM](https://github.com/kaaribou/volets-holm) · [Climat HOLM](https://github.com/kaaribou/climat-holm) · [Carburant HOLM](https://github.com/kaaribou/carburant-holm) · [Commandes à la maison HOLM](https://github.com/kaaribou/commandes-holm) · [HOLM LaMetric](https://github.com/kaaribou/lametric-holm) · [HOLM My Menu](https://github.com/kaaribou/holm-mymenu) · [HOLM Lektrico](https://github.com/kaaribou/lektrico-holm) · [HOLM Navbar Card](https://github.com/kaaribou/holm-navbar-card) · [HOLM Climate Card](https://github.com/kaaribou/climate-card-holm) · [HOLM Music Card](https://github.com/kaaribou/holm-music-card) · [HOLM Sentinel Card](https://github.com/kaaribou/holm-sentinel-card) · [HOLM Security Card](https://github.com/kaaribou/holm-security-card) · [HOLM Recordings Card](https://github.com/kaaribou/holm-recordings-card) · [HOLM Covers Card](https://github.com/kaaribou/holm-covers-card) · [HOLM Runtime Card](https://github.com/kaaribou/holm-runtime-card) · [HOLM Power Flow Card](https://github.com/kaaribou/holm-power-flow-card) · [HOLM Energy Cards](https://github.com/kaaribou/holm-energy-cards) · [HOLM Radiator Card](https://github.com/kaaribou/holm-radiator-card) · [HOLM Floor Card](https://github.com/kaaribou/holm-floor-card) · [HOLM HP/HC](https://github.com/kaaribou/holm-tarif) · [HOLM Smoke Card](https://github.com/kaaribou/holm-smoke-card) · [HOLM BG Card](https://github.com/kaaribou/holm-bg-card).
