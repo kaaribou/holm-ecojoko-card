@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1
+- **Sécurité** : les couleurs `colors` sont validées dans `setConfig` (hex, `rgb()`/`rgba()`, `hsl()`/`hsla()`, `var(--…)` ou nom de couleur CSS) ; toute autre valeur est remplacée par la couleur par défaut et ne peut plus injecter de balisage dans les attributs `style`. Une `scale` donnée en liste YAML est convertie en nombres comme la forme texte (valeurs non numériques ignorées), et les libellés de la jauge sont échappés.
+- README : l'installation commence par la recherche directe dans HACS ; formats de couleur acceptés et formes de `scale` documentés.
+
 ## 1.5.0
 - **Option Base (prix unique)** ([#4](https://github.com/kaaribou/holm-ecojoko-card/issues/4)) : option tarifaire **Base** (`tariff: base`) avec un seul compteur (`energy_base`, compteur du jour ou index cumulé) et un seul prix (`price_base`, nombre ou entité).
   - Pas d'indicateur heures creuses / pleines ; page Aujourd'hui : coût et kWh sans ligne HC / HP ni part des heures creuses ; semaine : coût total, barres d'une seule couleur.

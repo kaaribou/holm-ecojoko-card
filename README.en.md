@@ -31,7 +31,11 @@ HOLM Ecojoko Card takes the spirit of the Ecojoko dial: a large power gauge with
 
 *Screenshots in French — the card follows the language of your Home Assistant profile.*
 
-### 🆕 What's new in 1.5.0
+### 🆕 What's new in 1.5.1
+
+- 🔒 **Security**: the colours (`colors`) and scale marks (`scale`) from the configuration are now validated before being displayed. A colour in an unrecognised format is replaced by the default colour, and only numeric `scale` values are kept, whether it is written as text or as a list.
+
+### What's new in 1.5.0
 
 - 💡 **Base option (single price)** ([#4](https://github.com/kaaribou/holm-ecojoko-card/issues/4)): **Tariff → Base** in the editor, then a single counter (`energy_base`) and a single price (`price_base`). No off-peak / peak indicator and no off-peak share: the Today page simply shows the cost and kWh, the week its total cost.
 - 🔗 **Prices taken from HOLM HP/HC**: when a price isn't set in the card, it uses the one from the [HOLM HP/HC](https://github.com/kaaribou/holm-tarif) integration (`number.tarif_prix_hc`, `…_hp`, `…_base`, the 6 Tempo prices, and the feed-in price in solar mode). A price changed in the integration is used everywhere. In the editor, price fields say so ("empty: HOLM HP/HC").
@@ -55,10 +59,11 @@ HOLM Ecojoko Card takes the spirit of the Ecojoko dial: a large power gauge with
 
 ### With HACS (recommended)
 
-1. HACS → ⋮ menu → **Custom repositories**.
-2. Add `https://github.com/kaaribou/holm-ecojoko-card`, category **Dashboard** (*Plugin*).
-3. Search for the card → **Download**.
-4. Reload the page (Ctrl + F5).
+1. Open **HACS** and search for **HOLM Ecojoko Card**.
+2. Open the card → **Download**.
+3. Reload the page (Ctrl + F5).
+
+> If the card does not show up in the search yet: HACS → ⋮ menu → **Custom repositories**, add `https://github.com/kaaribou/holm-ecojoko-card`, category **Dashboard** (*Plugin*), then start again at step 1.
 
 ### Manually
 
@@ -135,11 +140,11 @@ price_export: 0.04                      # feed-in price
 | `solar_power` / `solar_energy` / `export_energy` | In consumption mode: adds a “solar” page | — |
 | `energy` / `price_self` / `price_export` / `forecast` | Solar mode: production (kWh), kWh values, forecast | — |
 | `max_power` | Gauge maximum power (W) | `12000` (6000 in solar mode) |
-| `scale` | Gauge scale marks | `0, 50, 100, 500, 1000, 5000, 10000` |
+| `scale` | Gauge scale marks, as text (`0, 500, 1000`) or as a YAML list; only numbers are kept | `0, 50, 100, 500, 1000, 5000, 10000` |
 | `rotate_seconds` | Auto-rotation (0 = off) | `10` |
 | `title` / `title_position` | Title, at the top or bottom | — |
 | `size` / `show_frame` | Dial size, card frame | — |
-| `colors` | Colours of each page (`power`, `today`, `week`, `solar`…), `hc` / `hp` for the indicator, `bleu` / `blanc` / `rouge` for Tempo | blue / turquoise / green / gold, green / orange |
+| `colors` | Colours of each page (`power`, `today`, `week`, `solar`…), `hc` / `hp` for the indicator, `bleu` / `blanc` / `rouge` for Tempo. Accepted formats: `#1f6aa8`, `rgb(…)` / `rgba(…)`, `hsl(…)`, `var(--my-variable)` or a colour name (`red`); any other value is ignored and the default colour is used | blue / turquoise / green / gold, green / orange |
 
 ### Off-peak / peak hours
 

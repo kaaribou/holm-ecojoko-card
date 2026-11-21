@@ -28,7 +28,11 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 
 ![Consommation, semaine et mode solaire](docs/images/cadrans.png)
 
-### 🆕 Nouveautés de la 1.5.0
+### 🆕 Nouveautés de la 1.5.1
+
+- 🔒 **Sécurité** : les couleurs (`colors`) et les graduations (`scale`) de la configuration sont maintenant vérifiées avant l'affichage. Une couleur dans un format non reconnu est remplacée par la couleur par défaut, et seules les valeurs numériques de `scale` sont gardées, qu'elle soit écrite en texte ou en liste.
+
+### Nouveautés de la 1.5.0
 
 - 💡 **Option Base (prix unique)** ([#4](https://github.com/kaaribou/holm-ecojoko-card/issues/4)) : **Option tarifaire → Base** dans l'éditeur, puis un seul compteur (`energy_base`) et un seul prix (`price_base`). Pas d'indicateur heures creuses / pleines ni de « part des heures creuses » : la page Aujourd'hui affiche simplement le coût et les kWh, la semaine le coût total.
 - 🔗 **Prix repris de HOLM HP/HC** : si un prix n'est pas renseigné dans la carte, elle prend celui de l'intégration [HOLM HP/HC](https://github.com/kaaribou/holm-tarif) (`number.tarif_prix_hc`, `…_hp`, `…_base`, les 6 prix Tempo, et le prix de rachat en mode solaire). Un prix modifié dans l'intégration est pris en compte partout. Dans l'éditeur, les champs de prix l'indiquent (« vide : HOLM HP/HC »).
@@ -52,10 +56,11 @@ HOLM Ecojoko Card reprend l'esprit du cadran Ecojoko : une grande jauge de puiss
 
 ### Avec HACS (recommandé)
 
-1. HACS → menu ⋮ → **Dépôts personnalisés**.
-2. Ajoutez `https://github.com/kaaribou/holm-ecojoko-card`, catégorie **Tableau de bord** (*Dashboard / Plugin*).
-3. Recherchez la carte → **Télécharger**.
-4. Rechargez la page (Ctrl + F5).
+1. Ouvrez **HACS** et recherchez **HOLM Ecojoko Card**.
+2. Ouvrez la carte → **Télécharger**.
+3. Rechargez la page (Ctrl + F5).
+
+> Si la carte n'apparaît pas encore dans la recherche : HACS → menu ⋮ → **Dépôts personnalisés**, ajoutez `https://github.com/kaaribou/holm-ecojoko-card`, catégorie **Tableau de bord** (*Dashboard / Plugin*), puis reprenez à l'étape 1.
 
 ### Manuellement
 
@@ -132,11 +137,11 @@ price_export: 0.04                        # prix de revente
 | `solar_power` / `solar_energy` / `export_energy` | En mode conso : ajoute une page « solaire » | — |
 | `energy` / `price_self` / `price_export` / `forecast` | Mode solaire : production (kWh), valeurs du kWh, prévision | — |
 | `max_power` | Puissance maximale de la jauge (W) | `12000` (6000 en solaire) |
-| `scale` | Graduations de la jauge | `0, 50, 100, 500, 1000, 5000, 10000` |
+| `scale` | Graduations de la jauge, en texte (`0, 500, 1000`) ou en liste YAML ; seuls les nombres sont gardés | `0, 50, 100, 500, 1000, 5000, 10000` |
 | `rotate_seconds` | Défilement automatique (0 = désactivé) | `10` |
 | `title` / `title_position` | Titre, en haut ou en bas | — |
 | `size` / `show_frame` | Taille du cadran, cadre de la carte | — |
-| `colors` | Couleurs de chaque page (`power`, `today`, `week`, `solar`…), `hc` / `hp` pour l'indicateur, `bleu` / `blanc` / `rouge` pour Tempo | bleu / turquoise / vert / or, vert / orange |
+| `colors` | Couleurs de chaque page (`power`, `today`, `week`, `solar`…), `hc` / `hp` pour l'indicateur, `bleu` / `blanc` / `rouge` pour Tempo. Formats acceptés : `#1f6aa8`, `rgb(…)` / `rgba(…)`, `hsl(…)`, `var(--ma-variable)` ou un nom de couleur (`red`) ; une autre valeur est ignorée et la couleur par défaut est utilisée | bleu / turquoise / vert / or, vert / orange |
 
 ### Heures creuses / heures pleines
 

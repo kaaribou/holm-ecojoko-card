@@ -1,4 +1,4 @@
-/* holm-ecojoko-card — https://github.com/kaaribou/holm-ecojoko-card — licence MIT — v1.5.0 */
+/* holm-ecojoko-card — https://github.com/kaaribou/holm-ecojoko-card — licence MIT — v1.5.1 */
 // holm-ecojoko-card — cadran façon Ecojoko, adapté au thème (aucun helper)
 // type: custom:holm-ecojoko-card
 // power: sensor.ecojoko_consommation_temps_reel      (W, temps réel)
@@ -176,20 +176,35 @@ const tempoOf = (v) => {
 };
 const fmtK = (v) => (v >= 1000 ? (v / 1000).toLocaleString(NUMLOC, { maximumFractionDigits: 1 }) + "K" : String(v));
 
+
+// ---- validation des valeurs de configuration insérées dans le SVG / le HTML ----
+// Couleurs acceptées : #hex, rgb()/rgba()/hsl()/hsla() avec des nombres, var(--nom[, repli]) ou un nom de couleur CSS.
+const COLOR_RE = /^(#[0-9a-f]{3,8}|(rgba?|hsla?)\(\s*[\d.\s,%/+-]+\)|var\(--[\w-]+(\s*,\s*(#[0-9a-f]{3,8}|[a-z]+))?\)|[a-z]+)$/i;
+const safeColor = (v, def) => (typeof v === "string" && COLOR_RE.test(v.trim()) ? v.trim() : def);
+const safeColors = (user, defs) => {
+  const out = { ...defs };
+  if (user && typeof user === "object") for (const [k, v] of Object.entries(user)) out[k] = safeColor(v, defs[k] ?? null);
+  for (const k of Object.keys(out)) if (out[k] == null) delete out[k];
+  return out;
+};
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+
 class HolmEcojokoCard extends HTMLElement {
   setConfig(c) {
     if (!c || !c.power) throw new Error("holm-ecojoko-card : 'power' est requis");
     this._c = {
       max_power: 12000, rotate_seconds: 10,
-      colors: { power: "#1f6aa8", today: "#0a8f95", week: "#43a867", solar: "#d99a1c" }, ...c,
+      ...c,
     };
-    this._c.colors = { power: "#1f6aa8", today: "#0a8f95", week: "#43a867", solar: "#d99a1c", hc: "#2e9e5b", hp: "#e2702a", bleu: "#2f6fd6", blanc: "#8d99a8", rouge: "#d8433b", ...(c.colors || {}) };
+    this._c.colors = safeColors(c.colors, { power: "#1f6aa8", today: "#0a8f95", week: "#43a867", solar: "#d99a1c", hc: "#2e9e5b", hp: "#e2702a", bleu: "#2f6fd6", blanc: "#8d99a8", rouge: "#d8433b" });
     this._tempo = c.tariff === "tempo" && c.mode !== "solar";
     this._single = c.tariff === "base" && c.mode !== "solar";      // option Base : un seul compteur, un seul prix
     this._c.hc_display = ["text", "color", "both", "none"].includes(c.hc_display) ? c.hc_display : "text";
     this._c.hc_pages = c.hc_pages === "all" ? "all" : "power";
     this._c.hc_values = String(c.hc_values || "on, HC, HC.., heures creuses").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
-    if (typeof this._c.scale === "string") this._c.scale = this._c.scale.split(/[;, ]+/).map(Number).filter((n) => !isNaN(n));
+    if (typeof this._c.scale === "string") this._c.scale = this._c.scale.split(/[;, ]+/);
+    if (Array.isArray(this._c.scale)) this._c.scale = this._c.scale.map(Number).filter((n) => Number.isFinite(n));
+    else delete this._c.scale;
     if (!Array.isArray(this._c.scale) || this._c.scale.length < 2) delete this._c.scale;
     this._c.max_power = Number(this._c.max_power) || 12000;
     this._c.rotate_seconds = Number(this._c.rotate_seconds ?? 10);
@@ -198,7 +213,7 @@ class HolmEcojokoCard extends HTMLElement {
     this._base = {}; this._todayStat = {};
     this._solar = this._c.mode === "solar";
     if (this._solar) {
-      this._c.colors = { power: "#d9921c", today: "#e2702a", week: "#43a867", self: "#0a8f95", hc: "#2e9e5b", hp: "#e2702a", ...(c.colors || {}) };
+      this._c.colors = safeColors(c.colors, { power: "#d9921c", today: "#e2702a", week: "#43a867", self: "#0a8f95", hc: "#2e9e5b", hp: "#e2702a" });
       if (!this._c.scale) this._c.scale = [0, 250, 500, 1000, 2000, 3000, 4500];
       if (!c.max_power) this._c.max_power = 6000;
       this._slides = ["power", "today", "week", "self"];
@@ -433,7 +448,7 @@ class HolmEcojokoCard extends HTMLElement {
     sc.forEach((v, i) => {
       const a = A0 - step * i, [x, y] = this._pt(148, a);
       const rot = 90 - a;
-      svg += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})" class="lbl">${i === sc.length - 1 ? "MAX" : fmtK(v)}</text>`;
+      svg += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})" class="lbl">${i === sc.length - 1 ? "MAX" : esc(fmtK(v))}</text>`;
     });
     const [nx0, ny0] = this._pt(117, pa), [nx1, ny1] = this._pt(139, pa);
     svg += `<line x1="${nx0}" y1="${ny0}" x2="${nx1}" y2="${ny1}" class="needle" style="stroke:${col.power}"/>`;
@@ -777,4 +792,4 @@ window.customCards = window.customCards || [];
 { const l = langOf(document.querySelector("home-assistant")?.hass); window.customCards.push({ type: "holm-ecojoko-card", name: tr(l, "card_name"), description: tr(l, "card_desc"), preview: true }); }
 })();
 
-console.info("%c HOLM-ECOJOKO %c 1.5.0 ", "background:#1f6aa8;color:#111;border-radius:3px 0 0 3px", "background:#123;color:#fff;border-radius:0 3px 3px 0");
+console.info("%c HOLM-ECOJOKO %c 1.5.1 ", "background:#1f6aa8;color:#111;border-radius:3px 0 0 3px", "background:#123;color:#fff;border-radius:0 3px 3px 0");
